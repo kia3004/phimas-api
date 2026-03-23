@@ -1,0 +1,137 @@
+@model ReportsPageViewModel
+@{
+    Layout = "~/Views/Shared/_BHWLayout.cshtml";
+    ViewData["Title"] = "Consultation Logs";
+}
+
+<div class="section-grid">
+    <div class="toolbar">
+        <form method="get" asp-action="Reports" asp-controller="BHW">
+            <input class="form-control" type="text" name="search" value="@Model.Search" placeholder="Search consultation log, patient, or household" />
+            <button class="btn btn-outline-success" type="submit">Search</button>
+        </form>
+    </div>
+
+    @if (TempData["Message"] is string message)
+    {
+        <div class="surface-card p-3 border border-success-subtle">
+            <span class="text-success">@message</span>
+        </div>
+    }
+
+    <section class="page-grid-2">
+        <div class="form-shell">
+            <h3 class="section-title">Submit Consultation Log</h3>
+            <p class="section-subtitle">Inline patient entry is allowed here too, but the database still saves only the generated <code>PatientID</code> in <code>reports</code>.</p>
+            <form asp-action="SubmitReport" method="post" class="form-grid" autocomplete="off">
+                <div asp-validation-summary="ModelOnly" class="text-danger full-width"></div>
+                <div>
+                    <label asp-for="Form.PatientName" class="form-label">Patient Name</label>
+                    <input asp-for="Form.PatientName" class="form-control" autocomplete="off" placeholder="Enter patient name" />
+                    <span asp-validation-for="Form.PatientName" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Form.ContactNumber" class="form-label">Contact Number</label>
+                    <input asp-for="Form.ContactNumber" class="form-control" autocomplete="off" placeholder="09XXXXXXXXX" />
+                    <span asp-validation-for="Form.ContactNumber" class="text-danger"></span>
+                </div>
+                <div class="full-width surface-card p-3 patient-context-card">
+                    <div class="patient-context-grid">
+                        <div class="patient-context-grid__full">
+                            <label asp-for="Form.Address" class="form-label">Household Address</label>
+                            <textarea asp-for="Form.Address" rows="3" class="form-control"></textarea>
+                            <small class="text-secondary">
+                                @(string.IsNullOrWhiteSpace(Model.AssignedArea)
+                                    ? "Enter the household address used to find or create the patient link."
+                                    : $"Starts with your assigned area when applicable: {Model.AssignedArea}.")
+                            </small>
+                            <span asp-validation-for="Form.Address" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label asp-for="Form.EmergencyContactName" class="form-label">Emergency Contact Name</label>
+                            <input asp-for="Form.EmergencyContactName" class="form-control" autocomplete="off" placeholder="Optional" />
+                            <span asp-validation-for="Form.EmergencyContactName" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label asp-for="Form.EmergencyContactNumber" class="form-label">Emergency Contact Number</label>
+                            <input asp-for="Form.EmergencyContactNumber" class="form-control" autocomplete="off" placeholder="Optional" />
+                            <span asp-validation-for="Form.EmergencyContactNumber" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label asp-for="Form.DateGenerated" class="form-label">Date</label>
+                    <input asp-for="Form.DateGenerated" type="date" class="form-control" />
+                    <span asp-validation-for="Form.DateGenerated" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Form.ReportType" class="form-label">Record Type</label>
+                    <input asp-for="Form.ReportType" class="form-control" />
+                    <span asp-validation-for="Form.ReportType" class="text-danger"></span>
+                </div>
+                <div class="full-width">
+                    <label asp-for="Form.Content" class="form-label">Consultation Summary</label>
+                    <textarea asp-for="Form.Content" rows="6" class="form-control" placeholder="Summarize the assessment, findings, actions taken, and follow-up instructions."></textarea>
+                    <span asp-validation-for="Form.Content" class="text-danger"></span>
+                </div>
+                <div class="full-width">
+                    <button class="btn btn-success" type="submit">Submit Consultation Log</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="surface-card p-4">
+            <h3 class="section-title">Assistant Notes</h3>
+            <p class="section-subtitle">Useful prompts while preparing field updates.</p>
+            <div class="insight-list">
+                @foreach (var insight in Model.Insights)
+                {
+                    <div class="insight-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4>@insight.Title</h4>
+                            <span class="severity-pill @insight.Severity.ToLower()">@insight.Severity</span>
+                        </div>
+                        <p>@insight.Description</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <div class="table-shell">
+        <div class="toolbar">
+            <div>
+                <h3 class="section-title">Saved Consultation Logs</h3>
+                <p class="section-subtitle">Your previously submitted reports from web or mobile.</p>
+            </div>
+        </div>
+        <div class="stack-list">
+            @if (!Model.Reports.Any())
+            {
+                <div class="stack-item">
+                    <p class="mb-0 text-secondary">No consultation logs found.</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var report in Model.Reports)
+                {
+                    <div class="stack-item">
+                        <h4>@report.ReportType</h4>
+                        <p>@report.Content</p>
+                        <small class="text-secondary">
+                            @report.DisplayPatientName -
+                            @report.DisplayAddress -
+                            Emergency: @(string.IsNullOrWhiteSpace(report.DisplayEmergencyContactName) ? "Not set" : report.DisplayEmergencyContactName)@(string.IsNullOrWhiteSpace(report.DisplayEmergencyContactNumber) ? string.Empty : $" ({report.DisplayEmergencyContactNumber})")
+                        </small>
+                        <small class="text-secondary">@report.DateGenerated:g</small>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

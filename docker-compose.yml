@@ -1,0 +1,42 @@
+services:
+  phimas-db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: phimas
+      MARIADB_ROOT_PASSWORD: phimasroot
+    ports:
+      - "3306:3306"
+    volumes:
+      - phimas_mysql_data:/var/lib/mysql
+      - ./phimas.sql:/docker-entrypoint-initdb.d/01-phimas.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -p$$MARIADB_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  phimas-web:
+    build:
+      context: ./PHIMAS_PREDICTIVE_ANALYTICS/PHIMAS_PREDICTIVE_ANALYTICS
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      PORT: "8080"
+      Database__Host: phimas-db
+      Database__Port: "3306"
+      Database__Name: phimas
+      Database__User: root
+      Database__Password: phimasroot
+      Database__SslMode: None
+      AppStartup__SeedDemoData: "false"
+    ports:
+      - "5187:8080"
+    depends_on:
+      phimas-db:
+        condition: service_healthy
+
+volumes:
+  phimas_mysql_data:

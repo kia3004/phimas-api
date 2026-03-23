@@ -1,0 +1,100 @@
+@model TaskMonitoringPageViewModel
+@{
+    Layout = "~/Views/Shared/_CoreLayout.cshtml";
+    ViewData["Title"] = "Task Monitoring";
+}
+
+<div class="section-grid">
+    <section class="page-grid-2">
+        <div class="form-shell">
+            <h3 class="section-title">Dispatch Task</h3>
+            <p class="section-subtitle">Create tasks for BHW deployment directly from the CHO dashboard.</p>
+            <form asp-action="SaveTask" asp-controller="CHO" method="post" class="form-grid">
+                <input asp-for="Form.TaskID" type="hidden" />
+                <div>
+                    <label class="form-label">Title</label>
+                    <input asp-for="Form.Title" class="form-control" />
+                </div>
+                <div>
+                    <label class="form-label">BHW</label>
+                    <select asp-for="Form.BHWID" class="form-select" asp-items="@(new SelectList(Model.BHWs, "UserID", "FullName"))"></select>
+                </div>
+                <div>
+                    <label class="form-label">Household</label>
+                    <select asp-for="Form.HouseholdID" class="form-select" asp-items="@(new SelectList(Model.Households, "HouseholdID", "HouseholdMember"))"></select>
+                </div>
+                <div>
+                    <label class="form-label">Task Date</label>
+                    <input asp-for="Form.TaskDate" type="datetime-local" class="form-control" />
+                </div>
+                <div>
+                    <label class="form-label">Priority</label>
+                    <input asp-for="Form.Priority" class="form-control" />
+                </div>
+                <div>
+                    <label class="form-label">Status</label>
+                    <input asp-for="Form.Status" class="form-control" />
+                </div>
+                <div class="full-width">
+                    <label class="form-label">Description</label>
+                    <textarea asp-for="Form.Description" rows="4" class="form-control"></textarea>
+                </div>
+                <div class="full-width">
+                    <button class="btn btn-success" type="submit">Save Task</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="surface-card p-4">
+            <h3 class="section-title">Recommendation Queue</h3>
+            <p class="section-subtitle">Assistant suggestions for immediate assignment.</p>
+            <div class="insight-list">
+                @foreach (var recommendation in Model.Recommendations)
+                {
+                    <div class="insight-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4>@recommendation.HouseholdName</h4>
+                            <span class="severity-pill @(recommendation.RiskScore >= 80 ? "high" : "medium")">Risk @recommendation.RiskScore:0</span>
+                        </div>
+                        <p>Suggested BHW: <strong>@recommendation.RecommendedBHWName</strong></p>
+                        <p class="mt-2">@recommendation.Reason</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <div class="table-shell">
+        <h3 class="section-title">Active Assignments</h3>
+        <div class="table-responsive">
+            <table class="table table-borderless align-middle">
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>BHW</th>
+                        <th>Household</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Schedule</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var task in Model.Tasks)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">@task.Title</div>
+                                <small class="text-secondary">@task.Description</small>
+                            </td>
+                            <td>@task.BHWName</td>
+                            <td>@task.HouseholdName</td>
+                            <td><span class="status-pill @(task.Priority.ToLower())">@task.Priority</span></td>
+                            <td><span class="status-pill @(task.Status == "Done" ? "done" : task.Priority.ToLower())">@task.Status</span></td>
+                            <td>@task.TaskDate:g</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,85 @@
+@model ReportsPageViewModel
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Reports";
+}
+
+<div class="section-grid">
+    <div class="toolbar">
+        <form method="get" asp-action="Reports" asp-controller="Admin">
+            <input class="form-control" type="text" name="search" value="@Model.Search" placeholder="Search report title, content, patient, emergency contact, or household" />
+            <button class="btn btn-outline-success" type="submit">Search</button>
+        </form>
+    </div>
+
+    <section class="metric-grid">
+        <article class="metric-card accent-green">
+            <small>Total Scope</small>
+            <h3>@Model.TotalScope</h3>
+            <p>Households currently represented in the database.</p>
+        </article>
+        <article class="metric-card accent-amber">
+            <small>Data Points</small>
+            <h3>@Model.DataPoints</h3>
+            <p>Health records contributing to reporting and forecasting.</p>
+        </article>
+        <article class="metric-card accent-red">
+            <small>Risk Index</small>
+            <h3>@Model.RiskIndex</h3>
+            <p>Current aggregate household risk classification.</p>
+        </article>
+    </section>
+
+    <section class="page-grid-2">
+        <div class="table-shell">
+            <h3 class="section-title">Saved Reports</h3>
+            <p class="section-subtitle">Reports are read-only here so patient and household links remain consistent with BHW submissions.</p>
+            <div class="stack-list">
+                @if (!Model.Reports.Any())
+                {
+                    <div class="stack-item">
+                        <p class="mb-0 text-secondary">No reports found.</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var report in Model.Reports)
+                    {
+                        <div class="stack-item">
+                            <h4>@report.ReportType</h4>
+                            <p>@report.Content</p>
+                            @if (report.Patient != null || report.Household != null)
+                            {
+                                <small class="text-secondary">
+                                    Patient: @report.DisplayPatientName |
+                                    Household: @report.DisplayAddress |
+                                    Emergency: @(string.IsNullOrWhiteSpace(report.DisplayEmergencyContactName) ? "Not set" : report.DisplayEmergencyContactName)@(string.IsNullOrWhiteSpace(report.DisplayEmergencyContactNumber) ? string.Empty : $" ({report.DisplayEmergencyContactNumber})")
+                                </small>
+                            }
+                            <div class="mt-1">
+                                <small class="text-secondary">Generated @report.DateGenerated:g</small>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <div class="surface-card p-4">
+            <h3 class="section-title">AI Assistant Insights</h3>
+            <p class="section-subtitle">Insights stay available for monitoring, while household-linked report creation remains limited to BHW submissions.</p>
+            <div class="insight-list">
+                @foreach (var insight in Model.Insights)
+                {
+                    <div class="insight-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4>@insight.Title</h4>
+                            <span class="severity-pill @insight.Severity.ToLower()">@insight.Severity</span>
+                        </div>
+                        <p>@insight.Description</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+</div>

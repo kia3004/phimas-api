@@ -1,0 +1,49 @@
+@model HealthRecordsPageViewModel
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Health Records";
+}
+
+<div class="section-grid">
+    <div class="toolbar">
+        <form method="get" asp-action="HealthRecords" asp-controller="Admin">
+            <input class="form-control" type="text" name="search" value="@Model.Search" placeholder="Search patient, disease, household, emergency contact, or status" />
+            <button class="btn btn-outline-success" type="submit">Search</button>
+        </form>
+    </div>
+
+    <div class="table-shell">
+        <h3 class="section-title">Recorded Cases</h3>
+        <p class="section-subtitle">Health records are read-only for admin. Patient and emergency contact details are derived from linked household members.</p>
+        <div class="stack-list">
+            @if (!Model.HealthRecords.Any())
+            {
+                <div class="stack-item">
+                    <p class="mb-0 text-secondary">No health records found.</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var record in Model.HealthRecords)
+                {
+                    <div class="stack-item">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <h4>@record.Disease</h4>
+                            <span class="severity-pill @(record.Status.Contains("Escalated") ? "high" : "info")">@record.Status</span>
+                        </div>
+                        <p>@record.Symptoms</p>
+                        <small class="text-secondary">
+                            Patient: @record.DisplayPatientName |
+                            Household: @record.DisplayAddress |
+                            Emergency: @(string.IsNullOrWhiteSpace(record.DisplayEmergencyContactName) ? "Not set" : record.DisplayEmergencyContactName)@(string.IsNullOrWhiteSpace(record.DisplayEmergencyContactNumber) ? string.Empty : $" ({record.DisplayEmergencyContactNumber})") |
+                            BHW: @(record.BHW?.FullName ?? "Unassigned")
+                        </small>
+                        <div class="mt-1">
+                            <small class="text-secondary">@record.DateRecorded:g</small>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,120 @@
+@model HealthRecordsPageViewModel
+@{
+    Layout = "~/Views/Shared/_BHWLayout.cshtml";
+    ViewData["Title"] = "Health Records";
+}
+
+<div class="section-grid">
+    <div class="toolbar">
+        <form method="get" asp-action="HealthRecords" asp-controller="BHW">
+            <input class="form-control" type="text" name="search" value="@Model.Search" placeholder="Search patient, disease, household, or status" />
+            <button class="btn btn-outline-success" type="submit">Search</button>
+        </form>
+    </div>
+
+    @if (TempData["Message"] is string message)
+    {
+        <div class="surface-card p-3 border border-success-subtle">
+            <span class="text-success">@message</span>
+        </div>
+    }
+
+    <section class="page-grid-2">
+        <div class="form-shell">
+            <h3 class="section-title">Submit Health Record</h3>
+            <p class="section-subtitle">Create a patient and household inline when needed. The database still stores only <code>PatientID</code> in <code>health_records</code>.</p>
+            <form asp-action="AddHealthRecord" method="post" class="form-grid" autocomplete="off">
+                <div asp-validation-summary="ModelOnly" class="text-danger full-width"></div>
+                <div>
+                    <label asp-for="Form.PatientName" class="form-label">Patient Name</label>
+                    <input asp-for="Form.PatientName" class="form-control" autocomplete="off" placeholder="Enter patient name" />
+                    <span asp-validation-for="Form.PatientName" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Form.ContactNumber" class="form-label">Contact Number</label>
+                    <input asp-for="Form.ContactNumber" class="form-control" autocomplete="off" placeholder="09XXXXXXXXX" />
+                    <span asp-validation-for="Form.ContactNumber" class="text-danger"></span>
+                </div>
+                <div class="full-width surface-card p-3 patient-context-card">
+                    <div class="patient-context-grid">
+                        <div class="patient-context-grid__full">
+                            <label asp-for="Form.Address" class="form-label">Household Address</label>
+                            <textarea asp-for="Form.Address" rows="3" class="form-control"></textarea>
+                            <small class="text-secondary">
+                                @(string.IsNullOrWhiteSpace(Model.AssignedArea)
+                                    ? "Enter the household address used to find or create the record."
+                                    : $"Starts with your assigned area when applicable: {Model.AssignedArea}.")
+                            </small>
+                            <span asp-validation-for="Form.Address" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label asp-for="Form.EmergencyContactName" class="form-label">Emergency Contact Name</label>
+                            <input asp-for="Form.EmergencyContactName" class="form-control" autocomplete="off" placeholder="Optional" />
+                            <span asp-validation-for="Form.EmergencyContactName" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label asp-for="Form.EmergencyContactNumber" class="form-label">Emergency Contact Number</label>
+                            <input asp-for="Form.EmergencyContactNumber" class="form-control" autocomplete="off" placeholder="Optional" />
+                            <span asp-validation-for="Form.EmergencyContactNumber" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label asp-for="Form.DateRecorded" class="form-label">Date</label>
+                    <input asp-for="Form.DateRecorded" type="date" class="form-control" />
+                    <span asp-validation-for="Form.DateRecorded" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Form.Disease" class="form-label">Disease</label>
+                    <input asp-for="Form.Disease" class="form-control" autocomplete="off" placeholder="Enter disease or condition" />
+                    <span asp-validation-for="Form.Disease" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Form.Status" class="form-label">Status</label>
+                    <select asp-for="Form.Status" class="form-select">
+                        <option>Submitted</option>
+                        <option>Active</option>
+                        <option>Monitoring</option>
+                        <option>Escalated</option>
+                        <option>Recovered</option>
+                    </select>
+                    <span asp-validation-for="Form.Status" class="text-danger"></span>
+                </div>
+                <div class="full-width">
+                    <label asp-for="Form.Symptoms" class="form-label">Symptoms</label>
+                    <textarea asp-for="Form.Symptoms" rows="5" class="form-control" placeholder="List the observed symptoms."></textarea>
+                    <span asp-validation-for="Form.Symptoms" class="text-danger"></span>
+                </div>
+                <div class="full-width">
+                    <button class="btn btn-success" type="submit">Submit Record</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-shell">
+            <h3 class="section-title">My Submitted Records</h3>
+            <div class="stack-list">
+                @foreach (var record in Model.HealthRecords)
+                {
+                    <div class="stack-item">
+                        <h4>@record.Disease</h4>
+                        <p>@record.Symptoms</p>
+                        <small class="text-secondary">
+                            @record.DisplayPatientName -
+                            @record.DisplayAddress -
+                            Emergency: @(string.IsNullOrWhiteSpace(record.DisplayEmergencyContactName) ? "Not set" : record.DisplayEmergencyContactName)@(string.IsNullOrWhiteSpace(record.DisplayEmergencyContactNumber) ? string.Empty : $" ({record.DisplayEmergencyContactNumber})") -
+                            @record.DateRecorded:g
+                        </small>
+                        <div class="mt-2">
+                            <span class="severity-pill @(record.Status.Contains("Escalated") ? "high" : "info")">@record.Status</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

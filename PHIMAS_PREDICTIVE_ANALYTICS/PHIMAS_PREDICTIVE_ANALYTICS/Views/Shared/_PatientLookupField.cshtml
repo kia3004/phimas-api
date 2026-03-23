@@ -1,0 +1,160 @@
+@using System.Text.Json
+@model PatientLookupFieldViewModel
+@{
+    var selectedPatient = Model.SelectedPatientId.HasValue
+        ? Model.Patients.FirstOrDefault(patient => patient.PatientID == Model.SelectedPatientId.Value)
+        : null;
+    var patientDirectoryJson = JsonSerializer.Serialize(
+        Model.Patients.Select(patient => new
+        {
+            patientId = patient.PatientID,
+            patientName = patient.PatientName,
+            householdId = patient.HouseholdID,
+            householdName = patient.HouseholdName,
+            householdAddress = patient.HouseholdAddress,
+            emergencyContactName = patient.EmergencyContactName,
+            emergencyContactNumber = patient.EmergencyContactNumber,
+            searchText = patient.SearchText
+        }));
+    var selectedPatientIdValue = selectedPatient != null ? selectedPatient.PatientID.ToString() : string.Empty;
+    var selectedHouseholdIdValue = selectedPatient != null
+        ? selectedPatient.HouseholdID.ToString()
+        : Model.SelectedHouseholdId?.ToString() ?? string.Empty;
+    var patientNameValue = selectedPatient?.PatientName ?? string.Empty;
+    var patientNameDisplay = selectedPatient?.PatientName ?? Model.EmptyLabel;
+    var householdAddressDisplay = selectedPatient?.HouseholdAddress
+        ?? (Model.AllowEmpty ? "Not applicable for general reports." : "No household address available.");
+    var emergencyContactNameDisplay = selectedPatient?.EmergencyContactName
+        ?? (Model.AllowEmpty ? "Not applicable for general reports." : "No emergency contact recorded.");
+    var emergencyContactNumberDisplay = selectedPatient?.EmergencyContactNumber
+        ?? (Model.AllowEmpty ? "Not applicable for general reports." : "No contact number recorded.");
+    var autoAddress = selectedPatient?.HouseholdAddress ?? Model.AssignedArea ?? string.Empty;
+    var addressValue = !string.IsNullOrWhiteSpace(Model.VisitAddressValue)
+        ? Model.VisitAddressValue
+        : autoAddress;
+    var autoEmergencyContactName = selectedPatient?.EmergencyContactName ?? string.Empty;
+    var autoEmergencyContactNumber = selectedPatient?.EmergencyContactNumber ?? string.Empty;
+    var emergencyContactNameValue = !string.IsNullOrWhiteSpace(Model.EmergencyContactNameValue)
+        ? Model.EmergencyContactNameValue
+        : autoEmergencyContactName;
+    var emergencyContactNumberValue = !string.IsNullOrWhiteSpace(Model.EmergencyContactNumberValue)
+        ? Model.EmergencyContactNumberValue
+        : autoEmergencyContactNumber;
+    var addressId = $"household_address_{Guid.NewGuid():N}";
+    var emergencyContactNameId = $"emergency_contact_name_{Guid.NewGuid():N}";
+    var emergencyContactNumberId = $"emergency_contact_number_{Guid.NewGuid():N}";
+}
+
+<div class="full-width patient-lookup js-patient-lookup"
+     data-allow-empty="@(Model.AllowEmpty.ToString().ToLowerInvariant())"
+     data-empty-label="@Model.EmptyLabel">
+    <input type="hidden"
+           name="@Model.PatientIdFieldName"
+           value="@selectedPatientIdValue"
+           class="js-patient-id" />
+    @if (!string.IsNullOrWhiteSpace(Model.HouseholdIdFieldName))
+    {
+        <input type="hidden"
+               name="@Model.HouseholdIdFieldName"
+               value="@selectedHouseholdIdValue"
+               class="js-derived-household-id" />
+    }
+    <script type="application/json" class="js-patient-directory-data">@Html.Raw(patientDirectoryJson)</script>
+    <div class="patient-lookup__input-row">
+        <div class="patient-lookup__input-wrap">
+            <label class="form-label">@Model.LookupLabel</label>
+            <input type="text"
+                   class="form-control js-patient-lookup-input"
+                   value="@patientNameValue"
+                   placeholder="@Model.Placeholder"
+                   autocomplete="off"
+                   spellcheck="false" />
+            <small class="text-secondary js-patient-lookup-status">@Model.HelperText</small>
+            <div class="patient-lookup__results js-patient-lookup-results" hidden></div>
+        </div>
+        @if (Model.AllowEmpty)
+        {
+            <button type="button" class="btn btn-outline-secondary patient-lookup__clear js-patient-clear">Clear</button>
+        }
+    </div>
+</div>
+
+@if (Model.EnableVisitAddressEditor)
+{
+    <div class="full-width surface-card p-3 patient-context-card">
+        <div class="patient-context-grid">
+            <div class="patient-context-grid__full">
+                <small class="text-secondary">Selected Patient</small>
+                <div class="patient-context-summary js-patient-name">@patientNameDisplay</div>
+            </div>
+            <div class="patient-context-grid__full">
+                <label class="form-label" for="@addressId">@Model.VisitAddressLabel</label>
+                <textarea id="@addressId"
+                          name="@Model.VisitAddressFieldName"
+                          rows="3"
+                          class="form-control js-household-address-input"
+                          data-assigned-area="@Model.AssignedArea"
+                          data-last-auto-address="@autoAddress"
+                          required>@addressValue</textarea>
+                <small class="text-secondary">@Model.VisitAddressHelperText</small>
+            </div>
+            @if (Model.EnableEmergencyContactEditor)
+            {
+                <div>
+                    <label class="form-label" for="@emergencyContactNameId">@Model.EmergencyContactNameLabel</label>
+                    <input id="@emergencyContactNameId"
+                           type="text"
+                           name="@Model.EmergencyContactNameFieldName"
+                           value="@emergencyContactNameValue"
+                           class="form-control js-emergency-contact-name-input"
+                           data-last-auto-contact-name="@autoEmergencyContactName"
+                           placeholder="Enter emergency contact name" />
+                </div>
+                <div>
+                    <label class="form-label" for="@emergencyContactNumberId">@Model.EmergencyContactNumberLabel</label>
+                    <input id="@emergencyContactNumberId"
+                           type="text"
+                           name="@Model.EmergencyContactNumberFieldName"
+                           value="@emergencyContactNumberValue"
+                           class="form-control js-emergency-contact-number-input"
+                           data-last-auto-contact-number="@autoEmergencyContactNumber"
+                           placeholder="Enter contact number" />
+                </div>
+            }
+            else
+            {
+                <div>
+                    <label class="form-label">Emergency Contact Name</label>
+                    <input type="text" class="form-control js-emergency-contact-name" value="@emergencyContactNameDisplay" readonly />
+                </div>
+                <div>
+                    <label class="form-label">Contact Number</label>
+                    <input type="text" class="form-control js-emergency-contact-number" value="@emergencyContactNumberDisplay" readonly />
+                </div>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="full-width surface-card p-3">
+        <div class="d-flex flex-column gap-2">
+            <div>
+                <small class="text-secondary">Patient Name</small>
+                <div class="js-patient-name">@patientNameDisplay</div>
+            </div>
+            <div>
+                <small class="text-secondary">Household Address</small>
+                <div class="js-household-address">@householdAddressDisplay</div>
+            </div>
+            <div>
+                <small class="text-secondary">Emergency Contact Name</small>
+                <div class="js-emergency-contact-name">@emergencyContactNameDisplay</div>
+            </div>
+            <div>
+                <small class="text-secondary">Contact Number</small>
+                <div class="js-emergency-contact-number">@emergencyContactNumberDisplay</div>
+            </div>
+        </div>
+    </div>
+}

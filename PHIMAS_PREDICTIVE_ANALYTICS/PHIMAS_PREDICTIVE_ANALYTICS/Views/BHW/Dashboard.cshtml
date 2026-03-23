@@ -1,0 +1,131 @@
+@model BhwDashboardViewModel
+@{
+    Layout = "~/Views/Shared/_BHWLayout.cshtml";
+    ViewData["Title"] = "BHW Dashboard";
+}
+
+<div class="section-grid">
+    <div class="surface-card p-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h3 class="section-title">Good day, @Model.Worker.FullName</h3>
+                <p class="section-subtitle">You have @Model.DueToday tasks due today and @Model.AssignedTasks active assignments in the shared PHIMAS queue.</p>
+            </div>
+            <form asp-action="ToggleAvailability" method="post" class="d-flex align-items-center gap-2">
+                <span class="text-secondary">Availability</span>
+                <select name="available" class="form-select">
+                    @if (Model.Worker.IsAvailable)
+                    {
+                        <option value="true" selected>Available</option>
+                        <option value="false">Unavailable</option>
+                    }
+                    else
+                    {
+                        <option value="true">Available</option>
+                        <option value="false" selected>Unavailable</option>
+                    }
+                </select>
+                <button type="submit" class="btn btn-success">Save</button>
+            </form>
+        </div>
+    </div>
+
+    <section class="metric-grid">
+        <article class="metric-card accent-green">
+            <small>Assigned</small>
+            <h3>@Model.AssignedTasks</h3>
+            <p>Total tasks assigned to you.</p>
+        </article>
+        <article class="metric-card accent-red">
+            <small>High Priority</small>
+            <h3>@Model.HighPriorityTasks</h3>
+            <p>Urgent tasks that need immediate follow-up.</p>
+        </article>
+        <article class="metric-card accent-amber">
+            <small>Due Today</small>
+            <h3>@Model.DueToday</h3>
+            <p>Assignments scheduled for today.</p>
+        </article>
+        <article class="metric-card accent-purple">
+            <small>Completed</small>
+            <h3>@Model.CompletedTasks</h3>
+            <p>@Model.ProgressPercent% of your workload is complete.</p>
+        </article>
+    </section>
+
+    <section class="page-grid-2">
+        <div class="table-shell">
+            <div class="toolbar">
+                <div>
+                    <h3 class="section-title">Today's Tasks</h3>
+                    <p class="section-subtitle">These tasks mirror the mobile dashboard and API queue.</p>
+                </div>
+                <a class="btn btn-success" asp-controller="BHW" asp-action="Task">View all tasks</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-borderless align-middle">
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Schedule</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var task in Model.TodayTasks)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@task.Title</div>
+                                    <small class="text-secondary">@task.HouseholdName</small>
+                                </td>
+                                <td><span class="status-pill @(task.Priority.ToLower())">@task.Priority</span></td>
+                                <td><span class="status-pill @(task.Status == "Done" ? "done" : task.Priority.ToLower())">@task.Status</span></td>
+                                <td>@task.TaskDate:t</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="section-grid">
+            <div class="surface-card p-4">
+                <h3 class="section-title">Recent Consultation Logs</h3>
+                <p class="section-subtitle">Reports and consultation notes you submitted.</p>
+                <div class="stack-list">
+                    @foreach (var report in Model.RecentConsultations)
+                    {
+                        <div class="stack-item">
+                            <h4>@report.ReportType</h4>
+                            <p>@report.Content</p>
+                            @if (report.Patient != null || report.Household != null)
+                            {
+                                <small class="text-secondary">@report.Patient?.FullName - @report.Household?.HouseholdMember</small>
+                            }
+                            <small class="text-secondary">@report.DateGenerated:g</small>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="surface-card p-4">
+                <h3 class="section-title">AI Guidance</h3>
+                <p class="section-subtitle">System alerts tailored for field execution.</p>
+                <div class="insight-list">
+                    @foreach (var insight in Model.Insights)
+                    {
+                        <div class="insight-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h4>@insight.Title</h4>
+                                <span class="severity-pill @insight.Severity.ToLower()">@insight.Severity</span>
+                            </div>
+                            <p>@insight.Description</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

@@ -1,0 +1,85 @@
+@using System.Text.Json
+@model PredictiveAnalyticsPageViewModel
+@{
+    Layout = "~/Views/Shared/_CoreLayout.cshtml";
+    ViewData["Title"] = "Predictive Analytics";
+    var diseaseTrendJson = JsonSerializer.Serialize(Model.DiseaseTrend);
+}
+
+<div class="section-grid">
+    <section class="page-grid-2">
+        <div class="surface-card chart-card">
+            <h3 class="section-title">Disease Trend Graph</h3>
+            <p class="section-subtitle">Historical disease counts used for short-term forecasting.</p>
+            <canvas id="choPredictiveTrendChart"></canvas>
+        </div>
+
+        <div class="surface-card p-4">
+            <h3 class="section-title">Latest Stored Analysis</h3>
+            <p class="section-subtitle">Data pulled directly from the `predictiveanalyses` table.</p>
+            @if (Model.LatestAnalysis != null)
+            {
+                <div class="stack-item">
+                    <h4>@Model.LatestAnalysis.Disease</h4>
+                    <p>@Model.LatestAnalysis.PredictedCases projected cases in @Model.LatestAnalysis.HighRiskBarangay.</p>
+                    <span class="severity-pill @(Model.LatestAnalysis.ConfidenceScore >= 0.8f ? "high" : "medium")">@($"{Model.LatestAnalysis.ConfidenceScore:P0}")</span>
+                </div>
+            }
+        </div>
+    </section>
+
+    <section class="page-grid-2">
+        <div class="surface-card p-4">
+            <h3 class="section-title">Forecast Detail</h3>
+            <div class="stack-list">
+                @foreach (var forecast in Model.Forecasts)
+                {
+                    <div class="stack-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4>@forecast.Disease</h4>
+                            <span class="severity-pill @(forecast.ConfidenceScore >= 0.8f ? "high" : "medium")">@($"{forecast.ConfidenceScore:P0}")</span>
+                        </div>
+                        <p>@forecast.CurrentCases current cases, @forecast.PredictedCases projected in @forecast.HighRiskBarangay.</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="surface-card p-4">
+            <h3 class="section-title">Assistant Narrative</h3>
+            <div class="insight-list">
+                @foreach (var insight in Model.Insights)
+                {
+                    <div class="insight-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4>@insight.Title</h4>
+                            <span class="severity-pill @insight.Severity.ToLower()">@insight.Severity</span>
+                        </div>
+                        <p>@insight.Description</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const predictiveSeries = @Html.Raw(diseaseTrendJson);
+        new Chart(document.getElementById("choPredictiveTrendChart"), {
+            type: "line",
+            data: {
+                labels: predictiveSeries.map(item => item.label),
+                datasets: [{
+                    label: "Recorded cases",
+                    data: predictiveSeries.map(item => item.value),
+                    borderColor: "#0f7a4c",
+                    backgroundColor: "rgba(15, 122, 76, 0.15)",
+                    fill: true,
+                    tension: 0.35
+                }]
+            }
+        });
+    </script>
+}

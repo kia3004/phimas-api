@@ -1,0 +1,144 @@
+@using System.Text.Json
+@model ChoDashboardViewModel
+@{
+    Layout = "~/Views/Shared/_CoreLayout.cshtml";
+    ViewData["Title"] = "CHO Dashboard";
+    var diseaseTrendJson = JsonSerializer.Serialize(Model.DiseaseTrend);
+    var riskTrendJson = JsonSerializer.Serialize(Model.HouseholdRiskTrend);
+}
+
+<div class="section-grid">
+    <section class="metric-grid">
+        @foreach (var card in Model.Cards)
+        {
+            <article class="metric-card @card.AccentClass">
+                <small>@card.Label</small>
+                <h3>@card.Value</h3>
+                <p>@card.Subtitle</p>
+            </article>
+        }
+    </section>
+
+    <section class="page-grid-2">
+        <div class="section-grid">
+            <div class="surface-card chart-card">
+                <h3 class="section-title">Disease Trend</h3>
+                <p class="section-subtitle">Cases recorded over the last several days.</p>
+                <canvas id="diseaseTrendChart"></canvas>
+            </div>
+
+            <div class="surface-card chart-card">
+                <h3 class="section-title">High-Risk Household Profile</h3>
+                <p class="section-subtitle">Households with the highest computed risk score.</p>
+                <canvas id="riskProfileChart"></canvas>
+            </div>
+        </div>
+
+        <div class="section-grid">
+            <div class="surface-card p-4">
+                <h3 class="section-title">Forecasts and Alerts</h3>
+                <p class="section-subtitle">Projected increases derived from recent records.</p>
+                <div class="stack-list">
+                    @foreach (var forecast in Model.Forecasts)
+                    {
+                        <div class="stack-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h4>@forecast.Disease</h4>
+                                <span class="severity-pill @(forecast.ConfidenceScore >= 0.8f ? "high" : "medium")">@($"{forecast.ConfidenceScore:P0}")</span>
+                            </div>
+                            <p>@forecast.CurrentCases current cases, @forecast.PredictedCases projected next cycle in @forecast.HighRiskBarangay.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="surface-card p-4">
+                <h3 class="section-title">AI Assistant</h3>
+                <p class="section-subtitle">Actionable insights for CHO review.</p>
+                <div class="insight-list">
+                    @foreach (var insight in Model.Insights)
+                    {
+                        <div class="insight-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h4>@insight.Title</h4>
+                                <span class="severity-pill @insight.Severity.ToLower()">@insight.Severity</span>
+                            </div>
+                            <p>@insight.Description</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="table-shell">
+        <div class="toolbar">
+            <div>
+                <h3 class="section-title">High-Risk Households</h3>
+                <p class="section-subtitle">Priority households identified by predictive analytics.</p>
+            </div>
+            <a class="btn btn-success" asp-controller="CHO" asp-action="TaskMonitoring">Open Task Monitoring</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-borderless align-middle">
+                <thead>
+                    <tr>
+                        <th>Household</th>
+                        <th>Address</th>
+                        <th>Members</th>
+                        <th>Risk Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var household in Model.HighRiskHouseholds)
+                    {
+                        <tr>
+                            <td>@household.HouseholdMember</td>
+                            <td>@household.Address</td>
+                            <td>@household.NumberOfMembers</td>
+                            <td><span class="severity-pill high">@($"{household.RiskScore:0}")</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const diseaseTrend = @Html.Raw(diseaseTrendJson);
+        const riskTrend = @Html.Raw(riskTrendJson);
+
+        new Chart(document.getElementById("diseaseTrendChart"), {
+            type: "line",
+            data: {
+                labels: diseaseTrend.map(item => item.label),
+                datasets: [{
+                    label: "Cases",
+                    data: diseaseTrend.map(item => item.value),
+                    borderColor: "#0f7a4c",
+                    backgroundColor: "rgba(15, 122, 76, 0.15)",
+                    fill: true,
+                    tension: 0.3
+                }]
+            }
+        });
+
+        new Chart(document.getElementById("riskProfileChart"), {
+            type: "bar",
+            data: {
+                labels: riskTrend.map(item => item.label),
+                datasets: [{
+                    label: "Risk Score",
+                    data: riskTrend.map(item => item.value),
+                    backgroundColor: "rgba(214, 167, 44, 0.72)"
+                }]
+            },
+            options: {
+                indexAxis: "y"
+            }
+        });
+    </script>
+}

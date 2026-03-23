@@ -1,0 +1,82 @@
+@model InventoryPageViewModel
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Inventory";
+}
+
+<div class="section-grid">
+    <div class="toolbar">
+        <form method="get" asp-action="Inventory" asp-controller="Admin">
+            <input class="form-control" type="text" name="search" value="@Model.Search" placeholder="Search inventory item or unit" />
+            <button class="btn btn-outline-success" type="submit">Search</button>
+        </form>
+    </div>
+
+    <section class="page-grid-2">
+        <div class="form-shell">
+            <h3 class="section-title">Add Inventory Item</h3>
+            <p class="section-subtitle">Track quantities and threshold alerts for core supplies.</p>
+            <form asp-action="SaveInventory" method="post" class="form-grid">
+                <input asp-for="Form.ItemID" type="hidden" />
+                <div>
+                    <label class="form-label">Item Name</label>
+                    <input asp-for="Form.ItemName" class="form-control" />
+                </div>
+                <div>
+                    <label class="form-label">Unit</label>
+                    <input asp-for="Form.Unit" class="form-control" />
+                </div>
+                <div>
+                    <label class="form-label">Current Stock</label>
+                    <input asp-for="Form.CurrentStock" class="form-control" />
+                </div>
+                <div>
+                    <label class="form-label">Minimum Threshold</label>
+                    <input asp-for="Form.MinimumThreshold" class="form-control" />
+                </div>
+                <div class="full-width">
+                    <button class="btn btn-success" type="submit">Save Inventory</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-shell">
+            <h3 class="section-title">Supply Inventory</h3>
+            <p class="section-subtitle">Inventory changes update all dashboards immediately.</p>
+            <div class="stack-list">
+                @foreach (var item in Model.Items)
+                {
+                    var isLow = (item.CurrentStock ?? 0) <= (item.MinimumThreshold ?? 0);
+                    <div class="stack-item">
+                        <form asp-action="SaveInventory" method="post" class="form-grid">
+                            <input type="hidden" name="Form.ItemID" value="@item.ItemID" />
+                            <div>
+                                <label class="form-label">Item Name</label>
+                                <input class="form-control" name="Form.ItemName" value="@item.ItemName" />
+                            </div>
+                            <div>
+                                <label class="form-label">Unit</label>
+                                <input class="form-control" name="Form.Unit" value="@item.Unit" />
+                            </div>
+                            <div>
+                                <label class="form-label">Current Stock</label>
+                                <input class="form-control" name="Form.CurrentStock" value="@item.CurrentStock" />
+                            </div>
+                            <div>
+                                <label class="form-label">Threshold</label>
+                                <input class="form-control" name="Form.MinimumThreshold" value="@item.MinimumThreshold" />
+                            </div>
+                            <div class="full-width d-flex justify-content-between align-items-center">
+                                <span class="severity-pill @(isLow ? "high" : "info")">@(isLow ? "Below threshold" : "Healthy stock")</span>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-success" type="submit">Update</button>
+                                    <button class="btn btn-outline-danger" type="submit" formaction="@Url.Action("DeleteInventory", "Admin", new { id = item.ItemID })" formmethod="post">Delete</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+</div>

@@ -1,0 +1,279 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    Layout = "~/Views/Shared/_CoreLayout.cshtml";
+}
+
+@* 1. THE WRAPPER: This sets the background for the entire content area *@
+<div style="background-color: #f0fdf4; min-height: 100vh; padding: 20px;">
+
+    <div class="container-fluid py-4" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;">
+
+        <div class="row align-items-center mb-4">
+            <div class="col-md-7">
+                <h2 style="font-size:32px;font-weight:bold;color:darkgreen;margin:0;font-family:'Segoe UI', Arial, sans-serif;">Inventory Management</h2>
+                <p class="text-muted mb-0" style="font-size: 0.95rem;">Monitor and manage medical supplies, medications, and equipment stock levels.</p>
+            </div>
+            <div class="col-md-5 text-md-end mt-3 mt-md-0">
+                <div class="d-inline-flex gap-2">
+                    <button class="btn btn-white border shadow-sm btn-sm px-3 fw-medium bg-white">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Update Stock
+                    </button>
+                    <button class="btn btn-white border shadow-sm btn-sm px-3 fw-medium bg-white">
+                        <i class="bi bi-graph-up me-1"></i> Generate Forecast
+                    </button>
+                    <button class="btn btn-primary btn-sm px-3 fw-medium shadow-sm" style="background-color:darkgreen; border: none;">
+                        <i class="bi bi-plus-lg me-1"></i> Add New Item
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted small fw-semibold mb-1" style="font-size: 0.8rem;">Total Inventory Items</p>
+                            <h3 class="fw-bold mb-1" style="color: #111827;">156</h3>
+                            <p class="text-muted mb-0" style="font-size: 0.75rem;">Active pharmaceutical SKUs</p>
+                        </div>
+                        <div class= style="background-color: #eff6ff;">
+                            <i class="bi bi-box-seam text-primary fs-5"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted small fw-semibold mb-1" style="font-size: 0.8rem;">Low Stock Alerts</p>
+                            <h3 class="fw-bold mb-1" style="color: #111827;">12</h3>
+                            <p class="text-muted mb-0" style="font-size: 0.75rem;">Items below minimum threshold</p>
+                        </div>
+                        <div class=" style="background-color: #fef2f2;">
+                            <i class="bi bi-exclamation-triangle text-danger fs-5"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted small fw-semibold mb-1" style="font-size: 0.8rem;">Recent Dispatches</p>
+                            <h3 class="fw-bold mb-1" style="color: #111827;">840</h3>
+                            <p class="text-muted mb-0" style="font-size: 0.75rem;">Units distributed in last 24h</p>
+                        </div>
+                        <div class="p-2">
+                            <i class="bi bi-boxes fs-4 text-dark"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted small fw-semibold mb-1" style="font-size: 0.8rem;">Stock Accuracy</p>
+                            <h3 class="fw-bold mb-1" style="color: #111827;">98.2%</h3>
+                            <p class="text-muted mb-0" style="font-size: 0.75rem;">Audit reconciliation score</p>
+                        </div>
+                        <div class="p-2">
+                            <i class="bi bi-check-circle fs-4 text-dark"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card border-0 shadow-sm mt-4" style="border-radius: 12px; font-family: 'Inter', sans-serif;">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="fw-bold mb-1" style="color: darkgreen;">Stock Inventory</h4>
+                    <p class="text-muted small mb-0">Comprehensive list of all managed items.</p>
+                </div>
+                <div class="d-flex gap-3 align-items-center">
+                    <div class="input-group input-group-sm" style="width: 250px;">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control border-start-0 ps-0" placeholder="Search items...">
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle" style="border-color: #f3f4f6;">
+                    <thead class="text-muted small text-uppercase">
+                        <tr>
+                            <th class="fw-semibold border-0">SKU ID</th>
+                            <th class="fw-semibold border-0">Item Name</th>
+                            <th class="fw-semibold border-0">Category</th>
+                            <th class="fw-semibold border-0 text-end">Quantity</th>
+                            <th class="fw-semibold border-0">Unit</th>
+                            <th class="fw-semibold border-0">Min Threshold</th>
+                            <th class="fw-semibold border-0">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody style="font-size: 0.9rem;">
+                        <tr>
+                            <td class="text-muted">SKU-001</td>
+                            <td class="fw-medium">Paracetamol 500mg</td>
+                            <td><span class="badge bg-light text-dark rounded-pill px-3 py-2 fw-normal" style="background-color: #f3f4f6 !important;">Analgesics</span></td>
+                            <td class="text-end fw-bold">1,250</td>
+                            <td class="text-muted">Tablets</td>
+                            <td class="text-muted">500</td>
+                            <td><span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #f3f4f6; color: #111827;">Normal</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">SKU-002</td>
+                            <td class="fw-medium">Amoxicillin 250mg</td>
+                            <td><span class="badge bg-light text-dark rounded-pill px-3 py-2 fw-normal" style="background-color: #f3f4f6 !important;">Antibiotics</span></td>
+                            <td class="text-end fw-bold text-danger">150</td>
+                            <td class="text-muted">Capsules</td>
+                            <td class="text-muted">300</td>
+                            <td><span class="badge bg-danger rounded-pill px-3 py-2 fw-normal">Low Stock</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">SKU-003</td>
+                            <td class="fw-medium">Oral Rehydration Salts</td>
+                            <td><span class="badge bg-light text-dark rounded-pill px-3 py-2 fw-normal" style="background-color: #f3f4f6 !important;">Gastro</span></td>
+                            <td class="text-end fw-bold">4,500</td>
+                            <td class="text-muted">Sachets</td>
+                            <td class="text-muted">1000</td>
+                            <td><span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #f3f4f6; color: #111827;">Normal</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">SKU-004</td>
+                            <td class="fw-medium">Vitamin C Syrup</td>
+                            <td><span class="badge bg-light text-dark rounded-pill px-3 py-2 fw-normal" style="background-color: #f3f4f6 !important;">Supplements</span></td>
+                            <td class="text-end fw-bold text-danger">85</td>
+                            <td class="text-muted">Bottles</td>
+                            <td class="text-muted">100</td>
+                            <td><span class="badge bg-danger rounded-pill px-3 py-2 fw-normal">Low Stock</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">SKU-005</td>
+                            <td class="fw-medium">Surgical Masks (3-Ply)</td>
+                            <td><span class="badge bg-light text-dark rounded-pill px-3 py-2 fw-normal" style="background-color: #f3f4f6 !important;">Consumables</span></td>
+                            <td class="text-end fw-bold">12,000</td>
+                            <td class="text-muted">Pieces</td>
+                            <td class="text-muted">5000</td>
+                            <td><span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #f3f4f6; color: #111827;">Normal</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                <span class="text-muted small">Showing 6 of 6 entries</span>
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary btn-sm px-3 border" disabled>Previous</button>
+                    <button class="btn btn-outline-secondary btn-sm px-3 border">Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 12px; font-family: 'Inter', sans-serif;">
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <div class="rounded-3 p-2" style="background-color: #eef4ff; color: #1e3a8a;">
+                <i class="bi bi-bar-chart-line fs-5"></i>
+            </div>
+            <h5 class="fw-bold mb-0" style="color: #111827;">AI Demand Forecast</h5>
+        </div>
+        <p class="text-muted small mb-4">Predicted 30-day stock requirements based on seasonal trends.</p>
+
+        <div style="height: 250px; position: relative;">
+            <canvas id="forecastChart"></canvas>
+        </div>
+
+        <div class="mt-4 p-3 rounded-3" style="background-color: #fff8f8; border: 1px solid #fee2e2;">
+            <div class="d-flex gap-3 align-items-start">
+                <div class="text-danger mt-1">
+                    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-1 text-dark" style="font-size: 0.9rem;">Restock Required</h6>
+                    <p class="text-muted mb-2" style="font-size: 0.75rem; line-height: 1.4;">
+                        AI predicts a 45% increase in respiratory meds demand due to seasonal trends. 3 SKUs need urgent procurement.
+                    </p>
+                    <a href="#" class="text-dark small fw-bold text-decoration-none" style="font-size: 0.75rem;">
+                        View procurement list <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('forecastChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Amo', 'Vit', 'San', 'Par'], // Matches the SKU abbreviations
+                datasets: [
+                    {
+                        label: 'Current Stock',
+                        data: [150, 85, 45, 1250], // Data points from the visual
+                        backgroundColor: '#2563eb', // Dark Blue
+                        borderRadius: 4,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.6
+                    },
+                    {
+                        label: 'Predicted Need (30d)',
+                        data: [450, 220, 110, 1080], // Data points from the visual
+                        backgroundColor: '#22d3ee', // Cyan
+                        borderRadius: 4,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        align: 'start',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'rectRounded',
+                            padding: 15,
+                            font: { size: 11 }
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f3f4f6', drawBorder: false },
+                        ticks: {
+                            stepSize: 350, // Matches 0, 350, 700, 1050, 1400
+                            color: '#9ca3af',
+                            font: { size: 10 }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+    @* You can add your charts or data tables here, they will sit on the mint background *@
+
+</div>

@@ -1,0 +1,135 @@
+@model TaskMonitoringPageViewModel
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Task Monitoring";
+}
+
+<div class="section-grid">
+    <section class="page-grid-2">
+        <div class="form-shell">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h3 class="section-title">Create or Update Task</h3>
+                    <p class="section-subtitle">Dispatch BHWs manually or let the assistant recommend assignments.</p>
+                </div>
+                <form asp-action="AutoAssignHighRisk" method="post">
+                    <button class="btn btn-outline-success" type="submit">Auto-Assign Highest Risk</button>
+                </form>
+            </div>
+            <form asp-action="SaveTask" method="post" class="form-grid">
+                <input asp-for="Form.TaskID" type="hidden" />
+                <div>
+                    <label class="form-label">Title</label>
+                    <input asp-for="Form.Title" class="form-control" />
+                </div>
+                <div>
+                    <label class="form-label">BHW</label>
+                    <select asp-for="Form.BHWID" class="form-select" asp-items="@(new SelectList(Model.BHWs, "UserID", "FullName"))">
+                        <option value="">AI Recommended</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Household</label>
+                    <select asp-for="Form.HouseholdID" class="form-select" asp-items="@(new SelectList(Model.Households, "HouseholdID", "HouseholdMember"))"></select>
+                </div>
+                <div>
+                    <label class="form-label">Task Date</label>
+                    <input asp-for="Form.TaskDate" type="datetime-local" class="form-control" />
+                </div>
+                <div>
+                    <label class="form-label">Priority</label>
+                    <input asp-for="Form.Priority" class="form-control" />
+                </div>
+                <div>
+                    <label class="form-label">Status</label>
+                    <input asp-for="Form.Status" class="form-control" />
+                </div>
+                <div class="full-width">
+                    <label class="form-label">Description</label>
+                    <textarea asp-for="Form.Description" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="full-width">
+                    <button class="btn btn-success" type="submit">Save Task</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="surface-card p-4">
+            <h3 class="section-title">AI Assignment Recommendations</h3>
+            <p class="section-subtitle">Based on availability, workload, proximity, and household risk.</p>
+            <div class="insight-list">
+                @foreach (var recommendation in Model.Recommendations)
+                {
+                    <div class="insight-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4>@recommendation.HouseholdName</h4>
+                            <span class="severity-pill @(recommendation.RiskScore >= 80 ? "high" : "medium")">Risk @recommendation.RiskScore:0</span>
+                        </div>
+                        <p><strong>@recommendation.RecommendedBHWName</strong> recommended for @recommendation.Address.</p>
+                        <p class="mt-2">@recommendation.Reason</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <div class="table-shell">
+        <h3 class="section-title">Active Assignments</h3>
+        <p class="section-subtitle">Inline updates propagate immediately to the BHW mobile task list.</p>
+        <div class="stack-list">
+            @foreach (var task in Model.Tasks)
+            {
+                <div class="stack-item">
+                    <form asp-action="SaveTask" method="post" class="form-grid">
+                        <input type="hidden" name="Form.TaskID" value="@task.TaskID" />
+                        <div>
+                            <label class="form-label">Title</label>
+                            <input class="form-control" name="Form.Title" value="@task.Title" />
+                        </div>
+                        <div>
+                            <label class="form-label">BHW</label>
+                            <select class="form-select" name="Form.BHWID">
+                                @foreach (var bhw in Model.BHWs)
+                                {
+                                    <option value="@bhw.UserID" selected="@(task.BHWID == bhw.UserID ? "selected" : null)">@bhw.FullName</option>
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Household</label>
+                            <select class="form-select" name="Form.HouseholdID">
+                                @foreach (var household in Model.Households)
+                                {
+                                    <option value="@household.HouseholdID" selected="@(task.HouseholdID == household.HouseholdID ? "selected" : null)">@household.HouseholdMember</option>
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Task Date</label>
+                            <input class="form-control" type="datetime-local" name="Form.TaskDate" value="@task.TaskDate.ToString("yyyy-MM-ddTHH:mm")" />
+                        </div>
+                        <div>
+                            <label class="form-label">Priority</label>
+                            <input class="form-control" name="Form.Priority" value="@task.Priority" />
+                        </div>
+                        <div>
+                            <label class="form-label">Status</label>
+                            <input class="form-control" name="Form.Status" value="@task.Status" />
+                        </div>
+                        <div class="full-width">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="Form.Description" rows="3">@task.Description</textarea>
+                        </div>
+                        <div class="full-width d-flex justify-content-between align-items-center">
+                            <small class="text-secondary">@task.HouseholdAddress</small>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-success" type="submit">Update</button>
+                                <button class="btn btn-outline-danger" type="submit" formaction="@Url.Action("DeleteTask", "Admin", new { id = task.TaskID })" formmethod="post">Delete</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            }
+        </div>
+    </div>
+</div>

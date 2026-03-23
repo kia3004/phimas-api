@@ -1,0 +1,53 @@
+@model HouseholdsPageViewModel
+@{
+    Layout = "~/Views/Shared/_CoreLayout.cshtml";
+    ViewData["Title"] = "Households";
+}
+
+<div class="section-grid">
+    <div class="toolbar">
+        <form method="get" asp-action="Households" asp-controller="CHO">
+            <input class="form-control" type="text" name="search" value="@Model.Search" placeholder="Search household, address, or member" />
+            <button class="btn btn-outline-success" type="submit">Search</button>
+        </form>
+    </div>
+
+    <div class="table-shell">
+        <h3 class="section-title">CHO Household Registry</h3>
+        <p class="section-subtitle">Households are read-only in CHO. Patient and emergency contact details are shown from household members.</p>
+        <div class="stack-list">
+            @if (!Model.Households.Any())
+            {
+                <div class="stack-item">
+                    <p class="mb-0 text-secondary">No households found.</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var household in Model.Households)
+                {
+                    var emergencyContact = household.GetEmergencyContact();
+                    <div class="stack-item">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <h4>@household.HouseholdMember</h4>
+                            <span class="severity-pill @(household.RiskScore >= 70 ? "high" : household.RiskScore >= 40 ? "medium" : "info")">
+                                Risk @(household.RiskScore?.ToString("0") ?? "0")
+                            </span>
+                        </div>
+                        <p class="mb-1">@household.Address</p>
+                        <small class="text-secondary">
+                            Household ID @household.HouseholdID |
+                            Members: @household.NumberOfMembers |
+                            Emergency: @(emergencyContact?.FullName ?? "Not set")@(string.IsNullOrWhiteSpace(emergencyContact?.ContactNumber) ? string.Empty : $" ({emergencyContact?.ContactNumber})")
+                        </small>
+                        <div class="mt-2">
+                            <small class="text-secondary">
+                                Patients: @string.Join(", ", household.GetOrderedMembers().Select(member => member.FullName))
+                            </small>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>

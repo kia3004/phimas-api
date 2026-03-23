@@ -1,0 +1,145 @@
+Using launch settings from C:\Users\ACER\Downloads\systm\PHIMAS_PREDICTIVE_ANALYTICS\PHIMAS_PREDICTIVE_ANALYTICS\Properties\launchSettings.json...
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (26ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE IF NOT EXISTS users (
+    UserID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    FullName VARCHAR(150) NOT NULL,
+    Role VARCHAR(30) NOT NULL,
+    Email VARCHAR(150) NOT NULL UNIQUE,
+    Password VARCHAR(255) NOT NULL,
+    ContactNumber VARCHAR(50) NULL,
+    IsAvailable TINYINT(1) NOT NULL DEFAULT 1,
+    ProfilePicture VARCHAR(255) NULL,
+    AssignedArea VARCHAR(120) NULL
+);
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE IF NOT EXISTS households (
+    HouseholdID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    HouseholdMember VARCHAR(150) NOT NULL,
+    Address VARCHAR(255) NOT NULL,
+    NumberOfMembers INT NOT NULL,
+    RiskScore FLOAT NULL
+);
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE IF NOT EXISTS inventory (
+    ItemID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    ItemName VARCHAR(150) NOT NULL,
+    Unit VARCHAR(50) NOT NULL,
+    MinimumThreshold INT NULL,
+    CurrentStock INT NULL
+);
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE IF NOT EXISTS predictiveanalyses (
+    AnalyticsID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    DateGenerated DATETIME NOT NULL,
+    Disease VARCHAR(150) NOT NULL,
+    PredictedCases INT NULL,
+    HighRiskBarangay VARCHAR(150) NOT NULL,
+    ConfidenceScore FLOAT NOT NULL
+);
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE IF NOT EXISTS reports (
+    ReportID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    DateGenerated DATETIME NOT NULL,
+    GeneratedBy INT NULL,
+    ReportType VARCHAR(150) NOT NULL,
+    Content TEXT NOT NULL,
+    CONSTRAINT FK_reports_users FOREIGN KEY (GeneratedBy) REFERENCES users(UserID) ON DELETE SET NULL
+);
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE IF NOT EXISTS healthrecords (
+    RecordID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    HouseholdID INT NOT NULL,
+    BHWID INT NULL,
+    DateRecorded DATETIME NOT NULL,
+    Disease VARCHAR(150) NOT NULL,
+    Symptoms TEXT NOT NULL,
+    Status VARCHAR(50) NOT NULL,
+    CONSTRAINT FK_healthrecords_households FOREIGN KEY (HouseholdID) REFERENCES households(HouseholdID) ON DELETE CASCADE,
+    CONSTRAINT FK_healthrecords_users FOREIGN KEY (BHWID) REFERENCES users(UserID) ON DELETE SET NULL
+);
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE IF NOT EXISTS taskassignments (
+    TaskID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    BHWID INT NULL,
+    HouseholdID INT NULL,
+    TaskDate DATETIME NOT NULL,
+    Status VARCHAR(50) NOT NULL,
+    Priority VARCHAR(50) NOT NULL,
+    Title VARCHAR(150) NULL,
+    Description TEXT NULL,
+    CONSTRAINT FK_taskassignments_users FOREIGN KEY (BHWID) REFERENCES users(UserID) ON DELETE SET NULL,
+    CONSTRAINT FK_taskassignments_households FOREIGN KEY (HouseholdID) REFERENCES households(HouseholdID) ON DELETE SET NULL
+);
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS AssignedArea VARCHAR(120) NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE inventory ADD COLUMN IF NOT EXISTS CurrentStock INT NULL DEFAULT 0;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE taskassignments ADD COLUMN IF NOT EXISTS Title VARCHAR(150) NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      ALTER TABLE taskassignments ADD COLUMN IF NOT EXISTS Description TEXT NULL;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM `users` AS `u`)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM `households` AS `h`)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM `inventory` AS `i`)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM `healthrecords` AS `h`)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM `taskassignments` AS `t`)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT `u`.`UserID`, `u`.`AssignedArea`, `u`.`ContactNumber`, `u`.`Email`, `u`.`FullName`, `u`.`IsAvailable`, `u`.`Password`, `u`.`ProfilePicture`, `u`.`Role`
+      FROM `users` AS `u`
+      WHERE `u`.`Role` = 'BHW'
+      ORDER BY `u`.`UserID`
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT `h`.`HouseholdID`, `h`.`Address`, `h`.`HouseholdMember`, `h`.`NumberOfMembers`, `h`.`RiskScore`
+      FROM `households` AS `h`
+      ORDER BY `h`.`HouseholdID`
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM `reports` AS `r`)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM `predictiveanalyses` AS `p`)
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://127.0.0.1:5190
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: C:\Users\ACER\Downloads\systm\PHIMAS_PREDICTIVE_ANALYTICS\PHIMAS_PREDICTIVE_ANALYTICS

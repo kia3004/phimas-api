@@ -1,0 +1,85 @@
+@model User
+@{
+    Layout = "~/Views/Shared/_BHWLayout.cshtml";
+    ViewData["Title"] = "Account";
+}
+
+<div class="page-grid-2">
+    <div class="surface-card p-4">
+        <h3 class="section-title">Profile</h3>
+        <p class="section-subtitle">Update your field profile and password.</p>
+        <form asp-action="UpdateProfile" method="post" class="form-grid" enctype="multipart/form-data">
+            <input asp-for="UserID" type="hidden" />
+            <div>
+                <label class="form-label">Full Name</label>
+                <input asp-for="FullName" class="form-control" />
+            </div>
+            <div>
+                <label class="form-label">Email</label>
+                <input asp-for="Email" class="form-control" />
+            </div>
+            <div>
+                <label class="form-label">Contact Number</label>
+                <input asp-for="ContactNumber" class="form-control" />
+            </div>
+            <div>
+                <label class="form-label">Assigned Area</label>
+                <input asp-for="AssignedArea" class="form-control" />
+            </div>
+            <div class="full-width">
+                <button class="btn btn-success" type="submit">Update Profile</button>
+            </div>
+        </form>
+
+        <hr class="my-4" />
+
+        <form asp-action="UpdatePassword" method="post" class="form-grid">
+            <div>
+                <label class="form-label">Current Password</label>
+                <input name="currentPassword" type="password" class="form-control" />
+            </div>
+            <div>
+                <label class="form-label">New Password</label>
+                <input name="newPassword" type="password" class="form-control" />
+            </div>
+            <div class="full-width">
+                <button class="btn btn-outline-success" type="submit">Change Password</button>
+            </div>
+        </form>
+
+        <hr class="my-4" />
+
+        <form asp-action="UploadProfilePicture" method="post" enctype="multipart/form-data" class="d-flex gap-2 align-items-center">
+            <input type="file" name="picture" class="form-control" />
+            <button class="btn btn-outline-success" type="submit">Upload</button>
+        </form>
+    </div>
+
+    <div class="surface-card p-4">
+        <h3 class="section-title">Current Account Snapshot</h3>
+        <div class="stack-list">
+            <div class="stack-item">
+                <h4>@Model.FullName</h4>
+                <p>@Model.Email</p>
+            </div>
+            <div class="stack-item">
+                <h4>Role</h4>
+                <p>@Model.Role</p>
+            </div>
+            <div class="stack-item">
+                <h4>Assigned Area</h4>
+                <p>@(string.IsNullOrWhiteSpace(Model.AssignedArea) ? "Not set" : Model.AssignedArea)</p>
+            </div>
+            <div class="stack-item">
+                <h4>Availability</h4>
+                <p>@(Model.IsAvailable ? "Available" : "Unavailable")</p>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Model.ProfilePicture))
+            {
+                <div class="stack-item">
+                    <img src="@Model.ProfilePicture" alt="Profile picture" class="img-fluid rounded-4" />
+                </div>
+            }
+        </div>
+    </div>
+</div>

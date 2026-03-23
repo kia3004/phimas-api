@@ -1,0 +1,18 @@
+# .NET
+bin/
+obj/
+.vs/
+
+# Android / Gradle
+.gradle/
+.gradle-user-home/
+**/build/
+**/.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+*.crash

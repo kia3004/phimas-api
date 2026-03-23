@@ -1,0 +1,117 @@
+@model UsersPageViewModel
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "User Management";
+}
+
+<div class="section-grid">
+    <div class="toolbar">
+        <form method="get" asp-action="Admin" asp-controller="Admin">
+            <input class="form-control" type="text" name="search" value="@Model.Search" placeholder="Search by name, email, or role" />
+            <button class="btn btn-outline-success" type="submit">Search</button>
+        </form>
+        @if (TempData["Error"] is string error)
+        {
+            <span class="text-danger">@error</span>
+        }
+    </div>
+
+    <section class="page-grid-2">
+        <div class="form-shell">
+            <h3 class="section-title">Add New User</h3>
+            <p class="section-subtitle">Create admin, CHO, or BHW accounts stored in the shared database.</p>
+            <form asp-action="SaveUser" method="post" class="form-grid">
+                <input asp-for="Form.UserID" type="hidden" />
+                <div>
+                    <label class="form-label">Full Name</label>
+                    <input asp-for="Form.FullName" class="form-control" />
+                </div>
+                <div>
+                    <label class="form-label">Role</label>
+                    <select asp-for="Form.Role" class="form-select">
+                        <option value="ADMIN">Admin</option>
+                        <option value="CHO">CHO</option>
+                        <option value="BHW">BHW</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Email</label>
+                    <input asp-for="Form.Email" class="form-control" />
+                </div>
+                <div>
+                    <label class="form-label">Password</label>
+                    <input asp-for="Form.Password" type="password" class="form-control" />
+                </div>
+                <div>
+                    <label class="form-label">Contact Number</label>
+                    <input asp-for="Form.ContactNumber" class="form-control" />
+                </div>
+                <div>
+                    <label class="form-label">Assigned Area</label>
+                    <input asp-for="Form.AssignedArea" class="form-control" placeholder="Sevilla / Catbangen / San Vicente" />
+                </div>
+                <div class="full-width form-check">
+                    <input asp-for="Form.IsAvailable" class="form-check-input" />
+                    <label asp-for="Form.IsAvailable" class="form-check-label">Available for assignment</label>
+                </div>
+                <div class="full-width">
+                    <button class="btn btn-success" type="submit">Save User</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-shell">
+            <h3 class="section-title">Existing Users</h3>
+            <p class="section-subtitle">Inline updates are written directly to the shared PHIMAS database.</p>
+            <div class="stack-list">
+                @foreach (var user in Model.Users)
+                {
+                    <div class="stack-item">
+                        <form asp-action="SaveUser" method="post" class="form-grid">
+                            <input type="hidden" name="Form.UserID" value="@user.UserID" />
+                            <div>
+                                <label class="form-label">Full Name</label>
+                                <input class="form-control" name="Form.FullName" value="@user.FullName" />
+                            </div>
+                            <div>
+                                <label class="form-label">Role</label>
+                                <select class="form-select" name="Form.Role">
+                                    <option value="ADMIN" selected="@(user.Role == "ADMIN" ? "selected" : null)">Admin</option>
+                                    <option value="CHO" selected="@(user.Role == "CHO" ? "selected" : null)">CHO</option>
+                                    <option value="BHW" selected="@(user.Role == "BHW" ? "selected" : null)">BHW</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Email</label>
+                                <input class="form-control" name="Form.Email" value="@user.Email" />
+                            </div>
+                            <div>
+                                <label class="form-label">New Password</label>
+                                <input class="form-control" name="Form.Password" type="password" placeholder="Leave blank to keep existing" />
+                            </div>
+                            <div>
+                                <label class="form-label">Contact Number</label>
+                                <input class="form-control" name="Form.ContactNumber" value="@user.ContactNumber" />
+                            </div>
+                            <div>
+                                <label class="form-label">Assigned Area</label>
+                                <input class="form-control" name="Form.AssignedArea" value="@user.AssignedArea" />
+                            </div>
+                            <div class="full-width d-flex justify-content-between align-items-center">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="Form.IsAvailable" value="true" checked="@(user.IsAvailable ? "checked" : null)" />
+                                    <input type="hidden" name="Form.IsAvailable" value="false" />
+                                    <label class="form-check-label">Available</label>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-success" type="submit">Update</button>
+                                    <button class="btn btn-outline-danger" type="submit" formaction="@Url.Action("DeleteUser", "Admin", new { id = user.UserID })" formmethod="post">Delete</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+</div>

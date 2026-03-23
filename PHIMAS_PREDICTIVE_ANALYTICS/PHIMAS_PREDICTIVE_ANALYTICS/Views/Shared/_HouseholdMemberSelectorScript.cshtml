@@ -1,0 +1,363 @@
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var normalize = function (value) {
+        return (value || "").trim().toLowerCase();
+    };
+
+    var applyValue = function (element, value) {
+        if (!element) {
+            return;
+        }
+
+        if ("value" in element) {
+            element.value = value || "";
+            return;
+        }
+
+        element.textContent = value || "";
+    };
+
+    var updateContext = function (form, selectedPatient, allowEmpty, emptyLabel) {
+        var householdInput = form.querySelector(".js-derived-household-id");
+        var patientNameOutput = form.querySelector(".js-patient-name");
+        var householdAddressOutput = form.querySelector(".js-household-address");
+        var emergencyContactNameOutput = form.querySelector(".js-emergency-contact-name");
+        var emergencyContactNumberOutput = form.querySelector(".js-emergency-contact-number");
+        var householdAddressInput = form.querySelector(".js-household-address-input");
+        var emergencyContactNameInput = form.querySelector(".js-emergency-contact-name-input");
+        var emergencyContactNumberInput = form.querySelector(".js-emergency-contact-number-input");
+        var hasPatient = !!selectedPatient;
+
+        if (householdInput) {
+            householdInput.value = hasPatient ? String(selectedPatient.householdId || "") : "";
+        }
+
+        applyValue(patientNameOutput, hasPatient
+            ? (selectedPatient.patientName || "Unnamed Patient")
+            : emptyLabel);
+
+        if (householdAddressOutput) {
+            applyValue(householdAddressOutput, hasPatient
+                ? (selectedPatient.householdAddress || "No household address available.")
+                : (allowEmpty ? "Not applicable for general reports." : "No household address available."));
+        }
+
+        applyValue(emergencyContactNameOutput, hasPatient
+            ? (selectedPatient.emergencyContactName || "No emergency contact recorded.")
+            : (allowEmpty ? "Not applicable for general reports." : "No emergency contact recorded."));
+
+        applyValue(emergencyContactNumberOutput, hasPatient
+            ? (selectedPatient.emergencyContactNumber || "No contact number recorded.")
+            : (allowEmpty ? "Not applicable for general reports." : "No contact number recorded."));
+
+        if (householdAddressInput) {
+            var assignedArea = (householdAddressInput.getAttribute("data-assigned-area") || "").trim();
+            var nextAutoAddress = hasPatient
+                ? ((selectedPatient.householdAddress || "").trim() || assignedArea)
+                : assignedArea;
+            var lastAutoAddress = (householdAddressInput.getAttribute("data-last-auto-address") || "").trim();
+            var currentValue = (householdAddressInput.value || "").trim();
+
+            if (currentValue === "" || currentValue === lastAutoAddress) {
+                householdAddressInput.value = nextAutoAddress;
+            }
+
+            householdAddressInput.setAttribute("data-last-auto-address", nextAutoAddress);
+        }
+
+        if (emergencyContactNameInput) {
+            var nextAutoName = hasPatient ? (selectedPatient.emergencyContactName || "") : "";
+            var lastAutoName = emergencyContactNameInput.getAttribute("data-last-auto-contact-name") || "";
+            var currentName = emergencyContactNameInput.value || "";
+
+            if (currentName.trim() === "" || currentName === lastAutoName) {
+                emergencyContactNameInput.value = nextAutoName;
+            }
+
+            emergencyContactNameInput.setAttribute("data-last-auto-contact-name", nextAutoName);
+        }
+
+        if (emergencyContactNumberInput) {
+            var nextAutoNumber = hasPatient ? (selectedPatient.emergencyContactNumber || "") : "";
+            var lastAutoNumber = emergencyContactNumberInput.getAttribute("data-last-auto-contact-number") || "";
+            var currentNumber = emergencyContactNumberInput.value || "";
+
+            if (currentNumber.trim() === "" || currentNumber === lastAutoNumber) {
+                emergencyContactNumberInput.value = nextAutoNumber;
+            }
+
+            emergencyContactNumberInput.setAttribute("data-last-auto-contact-number", nextAutoNumber);
+        }
+    };
+
+    var bindSelectField = function (form, selectShell) {
+        var selectInput = selectShell.querySelector(".js-patient-select-input");
+        if (!selectInput) {
+            return;
+        }
+
+        var allowEmpty = selectShell.getAttribute("data-allow-empty") === "true";
+        var emptyLabel = selectShell.getAttribute("data-empty-label") || (allowEmpty ? "General Report" : "Select Patient");
+        var statusOutput = selectShell.querySelector(".js-patient-select-status");
+        var defaultStatus = statusOutput ? statusOutput.textContent : "";
+
+        var buildSelectedPatient = function () {
+            var selectedOption = selectInput.options[selectInput.selectedIndex];
+            if (!selectedOption || normalize(selectedOption.value) === "") {
+                return null;
+            }
+
+            return {
+                patientId: selectedOption.value,
+                patientName: selectedOption.getAttribute("data-patient-name"),
+                householdId: selectedOption.getAttribute("data-household-id"),
+                householdAddress: selectedOption.getAttribute("data-household-address"),
+                emergencyContactName: selectedOption.getAttribute("data-emergency-contact-name"),
+                emergencyContactNumber: selectedOption.getAttribute("data-emergency-contact-number")
+            };
+        };
+
+        var syncSelection = function () {
+            var selectedPatient = buildSelectedPatient();
+            selectInput.setCustomValidity("");
+            updateContext(form, selectedPatient, allowEmpty, emptyLabel);
+
+            if (statusOutput) {
+                statusOutput.textContent = selectedPatient
+                    ? "Patient selected. Household and emergency contact will be saved automatically."
+                    : defaultStatus;
+            }
+        };
+
+        selectInput.addEventListener("change", syncSelection);
+
+        form.addEventListener("submit", function (event) {
+            syncSelection();
+
+            if (allowEmpty || normalize(selectInput.value) !== "") {
+                return;
+            }
+
+            event.preventDefault();
+            selectInput.setCustomValidity("Select a registered patient.");
+            selectInput.reportValidity();
+            selectInput.focus();
+
+            if (statusOutput) {
+                statusOutput.textContent = "Select a registered patient before submitting.";
+            }
+        });
+
+        syncSelection();
+    };
+
+    var bindLookupField = function (form, lookup) {
+        var directoryElement = lookup.querySelector(".js-patient-directory-data");
+        var patientInput = lookup.querySelector(".js-patient-lookup-input");
+        var patientIdInput = lookup.querySelector(".js-patient-id");
+        var resultsContainer = lookup.querySelector(".js-patient-lookup-results");
+        var statusOutput = lookup.querySelector(".js-patient-lookup-status");
+        var clearButton = lookup.querySelector(".js-patient-clear");
+        if (!directoryElement || !patientInput || !patientIdInput || !resultsContainer) {
+            return;
+        }
+
+        var allowEmpty = lookup.getAttribute("data-allow-empty") === "true";
+        var emptyLabel = lookup.getAttribute("data-empty-label") || (allowEmpty ? "General Report" : "Select Patient");
+        var defaultStatus = statusOutput ? statusOutput.textContent : "";
+        var allPatients = [];
+        try {
+            allPatients = JSON.parse(directoryElement.textContent || "[]");
+        } catch (error) {
+            allPatients = [];
+        }
+
+        var getMatches = function (query) {
+            var normalizedQuery = normalize(query);
+            var matches = allPatients.filter(function (patient) {
+                if (normalizedQuery === "") {
+                    return true;
+                }
+
+                return normalize(patient.searchText).indexOf(normalizedQuery) >= 0 ||
+                    normalize(patient.patientName).indexOf(normalizedQuery) >= 0 ||
+                    normalize(patient.householdAddress).indexOf(normalizedQuery) >= 0 ||
+                    normalize(patient.emergencyContactName).indexOf(normalizedQuery) >= 0 ||
+                    normalize(patient.emergencyContactNumber).indexOf(normalizedQuery) >= 0;
+            });
+
+            return matches.slice(0, 8);
+        };
+
+        var findPatientById = function (patientId) {
+            var resolvedPatientId = normalize(patientId);
+            return allPatients.find(function (patient) {
+                return String(patient.patientId) === resolvedPatientId;
+            }) || null;
+        };
+
+        var findExactMatch = function (value) {
+            var normalizedValue = normalize(value);
+            if (normalizedValue === "") {
+                return null;
+            }
+
+            var matches = allPatients.filter(function (patient) {
+                return normalize(patient.patientName) === normalizedValue;
+            });
+
+            return matches.length === 1 ? matches[0] : null;
+        };
+
+        var hideResults = function () {
+            resultsContainer.hidden = true;
+            resultsContainer.innerHTML = "";
+        };
+
+        var selectPatient = function (selectedPatient, customStatus) {
+            patientIdInput.value = selectedPatient ? String(selectedPatient.patientId) : "";
+            patientInput.value = selectedPatient ? selectedPatient.patientName : "";
+            patientInput.setCustomValidity("");
+            updateContext(form, selectedPatient, allowEmpty, emptyLabel);
+            hideResults();
+
+            if (statusOutput) {
+                statusOutput.textContent = customStatus || (selectedPatient
+                    ? "Patient matched. Household and emergency contact will be saved automatically."
+                    : defaultStatus);
+            }
+        };
+
+        var renderResults = function (query) {
+            var matches = getMatches(query);
+            var selectedPatientId = patientIdInput.value;
+            resultsContainer.innerHTML = "";
+
+            if (matches.length === 0 && normalize(query) !== "") {
+                var emptyState = document.createElement("div");
+                emptyState.className = "patient-lookup__empty";
+                emptyState.textContent = "No registered patient matched that lookup.";
+                resultsContainer.appendChild(emptyState);
+                resultsContainer.hidden = false;
+                return;
+            }
+
+            if (matches.length === 0) {
+                hideResults();
+                return;
+            }
+
+            matches.forEach(function (patient) {
+                var resultButton = document.createElement("button");
+                resultButton.type = "button";
+                resultButton.className = "patient-lookup__result";
+                resultButton.setAttribute("data-selected", String(patient.patientId) === selectedPatientId ? "true" : "false");
+
+                var resultTitle = document.createElement("strong");
+                resultTitle.textContent = patient.patientName || "Unnamed Patient";
+
+                var resultMeta = document.createElement("small");
+                var emergencyContact = [patient.emergencyContactName, patient.emergencyContactNumber]
+                    .filter(function (value) { return !!value; })
+                    .join(" | ");
+                resultMeta.textContent = [patient.householdAddress, emergencyContact]
+                    .filter(function (value) { return !!value; })
+                    .join(" | ");
+
+                resultButton.appendChild(resultTitle);
+                resultButton.appendChild(resultMeta);
+                resultButton.addEventListener("click", function () {
+                    selectPatient(patient);
+                });
+
+                resultsContainer.appendChild(resultButton);
+            });
+
+            resultsContainer.hidden = false;
+        };
+
+        var resolveFromInput = function () {
+            var query = patientInput.value;
+            if (normalize(query) === "") {
+                if (allowEmpty) {
+                    selectPatient(null, "General report mode enabled.");
+                    return true;
+                }
+
+                patientIdInput.value = "";
+                updateContext(form, null, allowEmpty, emptyLabel);
+                return false;
+            }
+
+            var exactMatch = findExactMatch(query);
+            if (!exactMatch) {
+                patientIdInput.value = "";
+                updateContext(form, null, allowEmpty, emptyLabel);
+                return false;
+            }
+
+            selectPatient(exactMatch);
+            return true;
+        };
+
+        patientInput.addEventListener("input", function () {
+            if (!resolveFromInput() && statusOutput) {
+                statusOutput.textContent = patientInput.value.trim() === ""
+                    ? defaultStatus
+                    : "Select a patient from the lookup results.";
+            }
+
+            renderResults(patientInput.value);
+        });
+
+        patientInput.addEventListener("focus", function () {
+            renderResults(patientInput.value);
+        });
+
+        patientInput.addEventListener("blur", function () {
+            window.setTimeout(function () {
+                resolveFromInput();
+                hideResults();
+            }, 150);
+        });
+
+        if (clearButton) {
+            clearButton.addEventListener("click", function () {
+                selectPatient(null, "General report mode enabled.");
+                patientInput.focus();
+            });
+        }
+
+        form.addEventListener("submit", function (event) {
+            if (resolveFromInput()) {
+                return;
+            }
+
+            event.preventDefault();
+            patientInput.setCustomValidity("Select a registered patient.");
+            patientInput.reportValidity();
+            patientInput.focus();
+            renderResults(patientInput.value);
+
+            if (statusOutput) {
+                statusOutput.textContent = "Select a registered patient from the lookup results.";
+            }
+        });
+
+        selectPatient(findPatientById(patientIdInput.value));
+    };
+
+    document.querySelectorAll(".js-patient-form").forEach(function (form) {
+        var selectShell = form.querySelector(".js-patient-select");
+        if (selectShell) {
+            bindSelectField(form, selectShell);
+            return;
+        }
+
+        var lookup = form.querySelector(".js-patient-lookup");
+        if (lookup) {
+            bindLookupField(form, lookup);
+        }
+    });
+});
+</script>

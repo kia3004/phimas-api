@@ -1,0 +1,136 @@
+@model PatientLookupFieldViewModel
+@{
+    var selectedPatient = Model.SelectedPatientId.HasValue
+        ? Model.Patients.FirstOrDefault(patient => patient.PatientID == Model.SelectedPatientId.Value)
+        : null;
+    var selectedHouseholdIdValue = selectedPatient != null
+        ? selectedPatient.HouseholdID.ToString()
+        : Model.SelectedHouseholdId?.ToString() ?? string.Empty;
+    var emptyLabel = Model.AllowEmpty ? Model.EmptyLabel : "Select Patient";
+    var patientNameDisplay = selectedPatient?.PatientName ?? emptyLabel;
+    var householdAddressDisplay = selectedPatient?.HouseholdAddress
+        ?? (Model.AllowEmpty ? "Not applicable for general reports." : "No household address available.");
+    var emergencyContactNameDisplay = selectedPatient?.EmergencyContactName
+        ?? (Model.AllowEmpty ? "Not applicable for general reports." : "No emergency contact recorded.");
+    var emergencyContactNumberDisplay = selectedPatient?.EmergencyContactNumber
+        ?? (Model.AllowEmpty ? "Not applicable for general reports." : "No contact number recorded.");
+    var selectId = $"patient_select_{Guid.NewGuid():N}";
+    var autoAddress = selectedPatient?.HouseholdAddress ?? Model.AssignedArea ?? string.Empty;
+    var addressValue = !string.IsNullOrWhiteSpace(Model.VisitAddressValue)
+        ? Model.VisitAddressValue
+        : autoAddress;
+    var addressId = $"household_address_{Guid.NewGuid():N}";
+}
+
+<div class="full-width js-patient-select"
+     data-allow-empty="@(Model.AllowEmpty.ToString().ToLowerInvariant())"
+     data-empty-label="@emptyLabel">
+    @if (!string.IsNullOrWhiteSpace(Model.HouseholdIdFieldName))
+    {
+        <input type="hidden"
+               name="@Model.HouseholdIdFieldName"
+               value="@selectedHouseholdIdValue"
+               class="js-derived-household-id" />
+    }
+
+    <label class="form-label" for="@selectId">@Model.LookupLabel</label>
+
+    @if (Model.AllowEmpty)
+    {
+        <select id="@selectId" name="@Model.PatientIdFieldName" class="form-select js-patient-select-input">
+            <option value="">@Model.EmptyLabel</option>
+            @foreach (var patient in Model.Patients)
+            {
+                <option value="@patient.PatientID"
+                        selected="@(selectedPatient?.PatientID == patient.PatientID ? "selected" : null)"
+                        data-patient-name="@patient.PatientName"
+                        data-household-id="@patient.HouseholdID"
+                        data-household-address="@patient.HouseholdAddress"
+                        data-emergency-contact-name="@patient.EmergencyContactName"
+                        data-emergency-contact-number="@patient.EmergencyContactNumber">
+                    @patient.PatientName@if (!string.IsNullOrWhiteSpace(patient.HouseholdAddress))
+                    {
+                        <text> - @patient.HouseholdAddress</text>
+                    }
+                </option>
+            }
+        </select>
+    }
+    else
+    {
+        <select id="@selectId" name="@Model.PatientIdFieldName" class="form-select js-patient-select-input" required>
+            <option value="" selected="@(selectedPatient == null ? "selected" : null)" disabled>Select Patient</option>
+            @foreach (var patient in Model.Patients)
+            {
+                <option value="@patient.PatientID"
+                        selected="@(selectedPatient?.PatientID == patient.PatientID ? "selected" : null)"
+                        data-patient-name="@patient.PatientName"
+                        data-household-id="@patient.HouseholdID"
+                        data-household-address="@patient.HouseholdAddress"
+                        data-emergency-contact-name="@patient.EmergencyContactName"
+                        data-emergency-contact-number="@patient.EmergencyContactNumber">
+                    @patient.PatientName@if (!string.IsNullOrWhiteSpace(patient.HouseholdAddress))
+                    {
+                        <text> - @patient.HouseholdAddress</text>
+                    }
+                </option>
+            }
+        </select>
+    }
+
+    <small class="text-secondary js-patient-select-status">@Model.HelperText</small>
+</div>
+
+@if (Model.EnableVisitAddressEditor)
+{
+    <div class="full-width surface-card p-3 patient-context-card">
+        <div class="patient-context-grid">
+            <div>
+                <label class="form-label">Selected Patient</label>
+                <input type="text" class="form-control js-patient-name" value="@patientNameDisplay" readonly />
+            </div>
+            <div class="patient-context-grid__full">
+                <label class="form-label" for="@addressId">@Model.VisitAddressLabel</label>
+                <textarea id="@addressId"
+                          name="@Model.VisitAddressFieldName"
+                          rows="3"
+                          class="form-control js-household-address-input"
+                          data-assigned-area="@Model.AssignedArea"
+                          data-last-auto-address="@autoAddress"
+                          required>@addressValue</textarea>
+                <small class="text-secondary">@Model.VisitAddressHelperText</small>
+            </div>
+            <div>
+                <label class="form-label">Emergency Contact Name</label>
+                <input type="text" class="form-control js-emergency-contact-name" value="@emergencyContactNameDisplay" readonly />
+            </div>
+            <div>
+                <label class="form-label">Contact Number</label>
+                <input type="text" class="form-control js-emergency-contact-number" value="@emergencyContactNumberDisplay" readonly />
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="full-width surface-card p-3">
+        <div class="d-flex flex-column gap-2">
+            <div>
+                <small class="text-secondary">Patient Name</small>
+                <div class="js-patient-name">@patientNameDisplay</div>
+            </div>
+            <div>
+                <small class="text-secondary">Household Address</small>
+                <div class="js-household-address">@householdAddressDisplay</div>
+            </div>
+            <div>
+                <small class="text-secondary">Emergency Contact Name</small>
+                <div class="js-emergency-contact-name">@emergencyContactNameDisplay</div>
+            </div>
+            <div>
+                <small class="text-secondary">Contact Number</small>
+                <div class="js-emergency-contact-number">@emergencyContactNumberDisplay</div>
+            </div>
+        </div>
+    </div>
+}
