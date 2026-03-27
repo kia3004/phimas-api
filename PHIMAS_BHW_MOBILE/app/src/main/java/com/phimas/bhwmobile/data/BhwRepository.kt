@@ -202,7 +202,7 @@ class BhwRepository(
 
     private fun normalizeApiBaseUrl(baseUrl: String): String {
         val trimmed = baseUrl.trim()
-        require(trimmed.isNotBlank()) { "Server URL is required." }
+        require(trimmed.isNotBlank()) { "https://phimas-api.onrender.com" }
 
         val normalized = if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
             trimmed

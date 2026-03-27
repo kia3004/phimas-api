@@ -1,15 +1,6 @@
-import java.util.Properties
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-}
-
-val localProperties = Properties().apply {
-    val localPropertiesFile = rootProject.file("local.properties")
-    if (localPropertiesFile.exists()) {
-        localPropertiesFile.inputStream().use(::load)
-    }
 }
 
 android {
@@ -23,10 +14,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        val configuredBaseUrl = providers.environmentVariable("BHW_API_BASE_URL").orNull
-            ?: localProperties.getProperty("bhwApiBaseUrl")
-            ?: providers.gradleProperty("bhwApiBaseUrl").orNull
-            ?: "https://your-render-service.onrender.com/"
+        val configuredBaseUrl = providers.gradleProperty("bhwApiBaseUrl").orNull ?: "http://10.0.2.2:5187/"
         val normalizedBaseUrl = if (configuredBaseUrl.endsWith("/")) configuredBaseUrl else "$configuredBaseUrl/"
         buildConfigField("String", "API_BASE_URL", "\"$normalizedBaseUrl\"")
     }
@@ -72,6 +60,8 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
+
+    implementation("com.google.android.material:material:1.12.0")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("com.squareup.retrofit2:retrofit:2.11.0")

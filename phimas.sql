@@ -17,6 +17,14 @@ SET time_zone = "+00:00";
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
 
+DROP TABLE IF EXISTS health_records;
+DROP TABLE IF EXISTS reports;
+DROP TABLE IF EXISTS task_assignments;
+DROP TABLE IF EXISTS household_members;
+DROP TABLE IF EXISTS households;
+DROP TABLE IF EXISTS inventory;
+DROP TABLE IF EXISTS predictive_analysis;
+DROP TABLE IF EXISTS users;
 --
 -- Database: `phimas`
 --

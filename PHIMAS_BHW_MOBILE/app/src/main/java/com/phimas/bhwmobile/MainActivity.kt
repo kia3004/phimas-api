@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -79,9 +80,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -200,11 +203,6 @@ private fun LoginScreen(
 ) {
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
-    var serverUrl by rememberSaveable { mutableStateOf(apiBaseUrl) }
-
-    LaunchedEffect(apiBaseUrl) {
-        serverUrl = apiBaseUrl
-    }
 
     Box(
         modifier = Modifier
@@ -222,15 +220,24 @@ private fun LoginScreen(
             Column(
                 modifier = Modifier.padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                Image(
+                    painter = painterResource(id = R.drawable.logop),
+                    contentDescription = "Logo",
+                    modifier = Modifier.size(120.dp),
+                    contentScale = ContentScale.Fit
+                )
                 Text(
                     text = "PHIMAS BHW Mobile",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center
                 )
                 Text(
-                    text = "Sign in with the same BHW account used by the shared PHIMAS backend.",
+                    text = "Sign in to your BHW account",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
                 )
                 OutlinedTextField(
                     value = username,
@@ -247,29 +254,17 @@ private fun LoginScreen(
                     visualTransformation = PasswordVisualTransformation(),
                     singleLine = true,
                 )
-                OutlinedTextField(
-                    value = serverUrl,
-                    onValueChange = { serverUrl = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Server URL") },
-                    placeholder = { Text("https://your-render-service.onrender.com/") },
-                    singleLine = true,
-                )
-                Text(
-                    text = "Use the same public PHIMAS backend URL as the web app. Local LAN URLs still work for development.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
                 if (!errorMessage.isNullOrBlank()) {
                     Text(
                         text = errorMessage,
                         color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center
                     )
                 }
                 Button(
-                    onClick = { onLogin(username, password, serverUrl) },
+                    onClick = { onLogin(username, password, apiBaseUrl) },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = username.isNotBlank() && password.isNotBlank() && serverUrl.isNotBlank() && !isAuthenticating,
+                    enabled = username.isNotBlank() && password.isNotBlank() && !isAuthenticating,
                 ) {
                     if (isAuthenticating) {
                         CircularProgressIndicator(
@@ -281,11 +276,6 @@ private fun LoginScreen(
                         Text("Sign In")
                     }
                 }
-                Text(
-                    text = "Saved server URL: $serverUrl",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
         }
     }
@@ -949,137 +939,6 @@ private fun ConsultationLogsScreen(
 }
 
 @Composable
-private fun PatientSelectionCard(
-    patient: PatientDirectoryDto?,
-    address: String,
-    onAddressChange: (String) -> Unit,
-) {
-    SectionCard {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedTextField(
-                value = patient?.patientName.orEmpty().ifBlank { "Select Patient" },
-                onValueChange = {},
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Selected Patient") },
-                readOnly = true,
-                singleLine = true,
-            )
-            OutlinedTextField(
-                value = address,
-                onValueChange = onAddressChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Household Address") },
-                placeholder = { Text("Barangay, street, house/unit, landmark") },
-                minLines = 3,
-            )
-            Text(
-                text = "Starts with the registered household address or your assigned area. Add unit or landmark details only when they are part of the real household address.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            OutlinedTextField(
-                value = patient?.emergencyContactName.orEmpty().ifBlank { "No emergency contact available." },
-                onValueChange = {},
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Emergency Contact Name") },
-                readOnly = true,
-                singleLine = true,
-            )
-            OutlinedTextField(
-                value = patient?.emergencyContactNumber.orEmpty().ifBlank { "No contact number available." },
-                onValueChange = {},
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Contact Number") },
-                readOnly = true,
-                singleLine = true,
-            )
-        }
-    }
-}
-
-@Composable
-private fun PatientLookupField(
-    patients: List<PatientDirectoryDto>,
-    query: String,
-    selectedPatient: PatientDirectoryDto?,
-    onQueryChange: (String) -> Unit,
-    onPatientSelected: (PatientDirectoryDto) -> Unit,
-) {
-    val trimmedQuery = query.trim()
-    val matchingPatients = patients
-        .filter { patient -> trimmedQuery.isBlank() || patientMatchesQuery(patient, trimmedQuery) }
-        .take(6)
-    val shouldShowSuggestions = matchingPatients.isNotEmpty() &&
-        (trimmedQuery.isBlank() || selectedPatient == null || !selectedPatient.patientName.equals(trimmedQuery, ignoreCase = true))
-
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        OutlinedTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Patient Name") },
-            placeholder = { Text("Type a patient name") },
-            singleLine = true,
-        )
-        Text(
-            text = "Select a patient to auto-fill the address and emergency contact.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        when {
-            shouldShowSuggestions -> {
-                OutlinedCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                ) {
-                    Column {
-                        matchingPatients.forEachIndexed { index, patient ->
-                            TextButton(
-                                onClick = { onPatientSelected(patient) },
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                                ) {
-                                    Text(
-                                        text = patient.patientName,
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                    )
-                                    Text(
-                                        text = listOfNotNull(
-                                            patient.householdAddress?.takeIf { it.isNotBlank() },
-                                            patient.emergencyContactName?.takeIf { it.isNotBlank() },
-                                        ).joinToString(" - ").ifBlank { "Registered patient" },
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                            }
-
-                            if (index < matchingPatients.lastIndex) {
-                                HorizontalDivider()
-                            }
-                        }
-                    }
-                }
-            }
-
-            trimmedQuery.isNotBlank() && selectedPatient == null -> {
-                Text(
-                    text = "No registered patient matched that name.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun AccountScreen(
     profile: BhwProfileDto?,
     apiBaseUrl: String,
@@ -1222,7 +1081,7 @@ private fun AccountScreen(
                     onValueChange = { serverUrl = it },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Server URL") },
-                    placeholder = { Text("https://your-render-service.onrender.com/") },
+                    placeholder = { Text("https://phimas-api.onrender.com/") },
                     singleLine = true,
                 )
                 Text(
@@ -1310,7 +1169,7 @@ private fun TaskSummaryCard(task: TaskItemDto) {
                     )
                     if (!task.householdName.isNullOrBlank()) {
                         Text(
-                            text = task.householdName.orEmpty(),
+                            text = task.householdName,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
@@ -1539,8 +1398,8 @@ private fun EmptyStateCard(message: String) {
 @Composable
 private fun DetailText(values: List<String?>) {
     val content = values
-        .orEmpty()
-        .mapNotNull { it?.takeIf { value -> value.isNotBlank() } }
+        .filterNotNull()
+        .filter { it.isNotBlank() }
         .joinToString(" - ")
 
     if (content.isNotBlank()) {
@@ -1611,7 +1470,7 @@ private fun DropdownField(
         OutlinedTextField(
             value = valueLabel(selectedValue),
             onValueChange = {},
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().menuAnchor(),
             label = { Text(label) },
             readOnly = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -1641,42 +1500,6 @@ private fun badgeColor(value: String): Color {
         "low" -> Color(0xFF2563EB)
         else -> Color(0xFF475569)
     }
-}
-
-private fun findExactPatientMatch(
-    patients: List<PatientDirectoryDto>,
-    query: String,
-): PatientDirectoryDto? {
-    val normalizedQuery = query.trim()
-    if (normalizedQuery.isBlank()) {
-        return null
-    }
-
-    val matches = patients.filter { patient ->
-        patient.patientName.equals(normalizedQuery, ignoreCase = true)
-    }
-
-    return matches.singleOrNull()
-}
-
-private fun patientMatchesQuery(
-    patient: PatientDirectoryDto,
-    query: String,
-): Boolean {
-    return patient.searchText.orEmpty().contains(query, ignoreCase = true) ||
-        patient.patientName.contains(query, ignoreCase = true) ||
-        patient.householdAddress.orEmpty().contains(query, ignoreCase = true) ||
-        patient.emergencyContactName.orEmpty().contains(query, ignoreCase = true) ||
-        patient.emergencyContactNumber.orEmpty().contains(query, ignoreCase = true)
-}
-
-private fun resolveSuggestedAddress(
-    patient: PatientDirectoryDto?,
-    assignedArea: String,
-): String {
-    return patient?.householdAddress
-        ?.takeIf { it.isNotBlank() }
-        ?: assignedArea.trim()
 }
 
 private fun isToday(value: String?): Boolean {
