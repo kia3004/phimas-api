@@ -87,10 +87,10 @@
         new Chart(document.getElementById("predictiveTrendChart"), {
             type: "line",
             data: {
-                labels: predictiveTrend.map(item => item.label),
+                labels: predictiveTrend.map(item => item.Label),
                 datasets: [{
                     label: "Recorded cases",
-                    data: predictiveTrend.map(item => item.value),
+                    data: predictiveTrend.map(item => item.Value),
                     borderColor: "#5a53d8",
                     backgroundColor: "rgba(90, 83, 216, 0.15)",
                     fill: true,

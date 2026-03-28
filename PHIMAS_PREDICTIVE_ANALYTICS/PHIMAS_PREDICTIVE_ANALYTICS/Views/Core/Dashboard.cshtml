@@ -123,10 +123,10 @@
         new Chart(document.getElementById("diseaseTrendChart"), {
             type: "line",
             data: {
-                labels: diseaseTrend.map(item => item.label),
+                labels: diseaseTrend.map(item => item.Label),
                 datasets: [{
                     label: "Cases",
-                    data: diseaseTrend.map(item => item.value),
+                    data: diseaseTrend.map(item => item.Value),
                     borderColor: "#0f7a4c",
                     backgroundColor: "rgba(15, 122, 76, 0.15)",
                     fill: true,
@@ -138,10 +138,10 @@
         new Chart(document.getElementById("riskProfileChart"), {
             type: "bar",
             data: {
-                labels: riskTrend.map(item => item.label),
+                labels: riskTrend.map(item => item.Label),
                 datasets: [{
                     label: "Risk Score",
-                    data: riskTrend.map(item => item.value),
+                    data: riskTrend.map(item => item.Value),
                     backgroundColor: "rgba(214, 167, 44, 0.72)"
                 }]
             },
