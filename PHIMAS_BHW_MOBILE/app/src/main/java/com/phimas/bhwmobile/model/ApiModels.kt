@@ -9,28 +9,28 @@ data class UserSession(
 
 data class BhwProfileDto(
     @SerializedName("success") val success: Boolean? = null,
-    @SerializedName("userId") val userId: Int,
-    @SerializedName("username") val username: String,
-    @SerializedName("bhwName") val bhwName: String,
-    @SerializedName("email") val email: String,
+    @SerializedName("userId") val userId: Int = 0,
+    @SerializedName("username") val username: String = "",
+    @SerializedName("bhwName") val bhwName: String = "",
+    @SerializedName("email") val email: String = "",
     @SerializedName("contactNumber") val contactNumber: String? = null,
     @SerializedName("assignedArea") val assignedArea: String? = null,
-    @SerializedName("isAvailable") val isAvailable: Boolean,
+    @SerializedName("isAvailable") val isAvailable: Boolean = false,
     @SerializedName("profilePicture") val profilePicture: String? = null,
 )
 
 data class DashboardSummaryDto(
-    @SerializedName("assignedTasks") val assignedTasks: Int,
-    @SerializedName("priorityTasks") val priorityTasks: Int,
-    @SerializedName("dueTasks") val dueTasks: Int,
-    @SerializedName("completedTasks") val completedTasks: Int,
-    @SerializedName("progress") val progress: Int,
-    @SerializedName("bhwName") val bhwName: String,
-    @SerializedName("isAvailable") val isAvailable: Boolean,
+    @SerializedName("assignedTasks") val assignedTasks: Int = 0,
+    @SerializedName("priorityTasks") val priorityTasks: Int = 0,
+    @SerializedName("dueTasks") val dueTasks: Int = 0,
+    @SerializedName("completedTasks") val completedTasks: Int = 0,
+    @SerializedName("progress") val progress: Int = 0,
+    @SerializedName("bhwName") val bhwName: String = "",
+    @SerializedName("isAvailable") val isAvailable: Boolean = false,
 )
 
 data class TaskItemDto(
-    @SerializedName("id") val id: Int,
+    @SerializedName("id") val id: Int = 0,
     @SerializedName("title") val title: String? = null,
     @SerializedName("description") val description: String? = null,
     @SerializedName("priority") val priority: String? = null,
@@ -42,9 +42,9 @@ data class TaskItemDto(
 )
 
 data class PatientDirectoryDto(
-    @SerializedName("patientId") val patientId: Int,
-    @SerializedName("patientName") val patientName: String,
-    @SerializedName("householdId") val householdId: Int,
+    @SerializedName("patientId") val patientId: Int = 0,
+    @SerializedName("patientName") val patientName: String = "",
+    @SerializedName("householdId") val householdId: Int = 0,
     @SerializedName("householdName") val householdName: String? = null,
     @SerializedName("householdAddress") val householdAddress: String? = null,
     @SerializedName("emergencyContactName") val emergencyContactName: String? = null,
@@ -53,7 +53,7 @@ data class PatientDirectoryDto(
 )
 
 data class HealthRecordDto(
-    @SerializedName(value = "recordId", alternate = ["id"]) val recordId: Int,
+    @SerializedName(value = "recordId", alternate = ["id"]) val recordId: Int = 0,
     @SerializedName("householdId") val householdId: Int? = null,
     @SerializedName("householdName") val householdName: String? = null,
     @SerializedName("householdAddress") val householdAddress: String? = null,
@@ -70,7 +70,7 @@ data class HealthRecordDto(
 )
 
 data class RecentReportDto(
-    @SerializedName(value = "reportId", alternate = ["id"]) val reportId: Int,
+    @SerializedName(value = "reportId", alternate = ["id"]) val reportId: Int = 0,
     @SerializedName("householdId") val householdId: Int? = null,
     @SerializedName("householdName") val householdName: String? = null,
     @SerializedName("householdAddress") val householdAddress: String? = null,
@@ -86,7 +86,7 @@ data class RecentReportDto(
 )
 
 data class ConsultationLogDto(
-    @SerializedName(value = "reportId", alternate = ["id"]) val reportId: Int,
+    @SerializedName(value = "reportId", alternate = ["id"]) val reportId: Int = 0,
     @SerializedName("householdId") val householdId: Int? = null,
     @SerializedName("householdName") val householdName: String? = null,
     @SerializedName("householdAddress") val householdAddress: String? = null,
@@ -102,19 +102,19 @@ data class ConsultationLogDto(
 )
 
 data class ConsultationLogsEnvelope(
-    @SerializedName("data") val data: List<ConsultationLogDto> = emptyList(),
+    @SerializedName("data") val data: List<ConsultationLogDto>? = emptyList(),
 )
 
 data class InsightDto(
-    @SerializedName("id") val id: Int,
+    @SerializedName("id") val id: Int = 0,
     @SerializedName("title") val title: String? = null,
     @SerializedName("description") val description: String? = null,
     @SerializedName("severity") val severity: String? = null,
 )
 
 data class MutationResponse(
-    @SerializedName("success") val success: Boolean,
-    @SerializedName("message") val message: String,
+    @SerializedName("success") val success: Boolean = false,
+    @SerializedName("message") val message: String = "",
     @SerializedName("recordId") val recordId: Int? = null,
     @SerializedName("reportId") val reportId: Int? = null,
     @SerializedName("profilePicture") val profilePicture: String? = null,

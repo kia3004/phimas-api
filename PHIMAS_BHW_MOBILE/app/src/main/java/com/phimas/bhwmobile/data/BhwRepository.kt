@@ -35,21 +35,56 @@ class BhwRepository(
     private val defaultBaseUrl: String,
     private val sessionStore: SessionStore,
 ) {
-    private var apiBaseUrl: String = try {
-        normalizeApiBaseUrl(sessionStore.loadApiBaseUrl() ?: defaultBaseUrl)
-    } catch (e: Exception) {
-        normalizeApiBaseUrl(defaultBaseUrl)
+    private var apiBaseUrl: String
+    private var apiService: ApiService
+
+    init {
+        val initialUrl = try {
+            val saved = sessionStore.loadApiBaseUrl()
+            if (!saved.isNullOrBlank()) normalize(saved) else normalize(defaultBaseUrl)
+        } catch (e: Exception) {
+            normalize(defaultBaseUrl)
+        }
+        apiBaseUrl = initialUrl
+        apiService = tryCreateService(apiBaseUrl)
     }
 
-    private var apiService: ApiService = ApiService.create(apiBaseUrl)
+    private fun normalize(url: String): String {
+        var trimmed = url.trim()
+        if (trimmed.isBlank()) {
+            trimmed = defaultBaseUrl.trim()
+        }
+        // Absolute fallback if everything is blank
+        if (trimmed.isBlank()) {
+            trimmed = "https://phimas-api.onrender.com/"
+        }
+
+        val normalized = if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+            trimmed
+        } else if (isLikelyLocalHost(trimmed)) {
+            "http://$trimmed"
+        } else {
+            "https://$trimmed"
+        }
+
+        return if (normalized.endsWith("/")) normalized else "$normalized/"
+    }
+
+    private fun tryCreateService(url: String): ApiService {
+        return try {
+            ApiService.create(url)
+        } catch (e: Exception) {
+            // If failed, try with absolute fallback
+            ApiService.create("https://phimas-api.onrender.com/")
+        }
+    }
 
     fun getSavedSession(): UserSession? = sessionStore.load()
 
     fun getApiBaseUrl(): String = apiBaseUrl
 
     fun updateApiBaseUrl(baseUrl: String): String {
-        val normalized = normalizeApiBaseUrl(baseUrl)
-        // Verify creation doesn't throw before saving
+        val normalized = normalize(baseUrl)
         val newService = ApiService.create(normalized)
         
         apiBaseUrl = normalized
@@ -205,21 +240,6 @@ class BhwRepository(
         )
         response.profile?.let(sessionStore::save)
         return response
-    }
-
-    private fun normalizeApiBaseUrl(baseUrl: String): String {
-        val trimmed = baseUrl.trim()
-        if (trimmed.isBlank()) return normalizeApiBaseUrl(defaultBaseUrl)
-
-        val normalized = if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-            trimmed
-        } else if (isLikelyLocalHost(trimmed)) {
-            "http://$trimmed"
-        } else {
-            "https://$trimmed"
-        }
-
-        return if (normalized.endsWith("/")) normalized else "$normalized/"
     }
 
     private fun isLikelyLocalHost(baseUrl: String): Boolean {
