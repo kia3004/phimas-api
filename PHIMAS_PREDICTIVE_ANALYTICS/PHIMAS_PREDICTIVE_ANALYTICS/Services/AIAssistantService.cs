@@ -18,21 +18,14 @@ public class AIAssistantService
 
     public async Task<List<AssistantInsightViewModel>> BuildInsightsAsync()
     {
-        await _predictiveAnalyticsService.RecalculateHouseholdRisksAsync();
-        var highRiskCount = await _context.Households.CountAsync(household => (household.RiskScore ?? 0) >= 70);
+        var trendInsight = await BuildHealthTrendInsightAsync();
         var overdueTasks = await _context.TaskAssignments.CountAsync(task => task.TaskDate < DateTime.Today && task.Status != "Done");
         var lowStock = await _context.Inventory.CountAsync(item => (item.CurrentStock ?? 0) <= (item.MinimumThreshold ?? 0));
-        var topForecast = await _context.PredictiveAnalysis.OrderByDescending(item => item.ConfidenceScore).FirstOrDefaultAsync();
+        var topForecast = await _predictiveAnalyticsService.GetLatestStoredAnalysisAsync();
 
         var insights = new List<AssistantInsightViewModel>
         {
-            new()
-            {
-                Type = "Trend",
-                Title = "Health trend summary",
-                Description = $"{highRiskCount} households are currently tagged as high risk based on recent records and household size.",
-                Severity = highRiskCount >= 3 ? "High" : "Medium"
-            },
+            trendInsight,
             new()
             {
                 Type = "Task",
@@ -61,6 +54,11 @@ public class AIAssistantService
         }
 
         return insights;
+    }
+
+    public async Task<List<AssistantInsightViewModel>> BuildBhwInsightsAsync()
+    {
+        return [await BuildHealthTrendInsightAsync()];
     }
 
     public async Task<List<AssignmentRecommendationViewModel>> BuildAssignmentRecommendationsAsync()
@@ -175,5 +173,19 @@ public class AIAssistantService
             : "best overall available match";
 
         return $"{worker.FullName} was selected because the worker is {proximity}, marked {(worker.IsAvailable ? "available" : "unavailable")}, and currently has {openTasks} active tasks.";
+    }
+
+    private async Task<AssistantInsightViewModel> BuildHealthTrendInsightAsync()
+    {
+        await _predictiveAnalyticsService.RecalculateHouseholdRisksAsync();
+        var highRiskCount = await _context.Households.CountAsync(household => (household.RiskScore ?? 0) >= 70);
+
+        return new AssistantInsightViewModel
+        {
+            Type = "Trend",
+            Title = "Health trend summary",
+            Description = $"{highRiskCount} households are currently tagged as high risk based on recent records and household size.",
+            Severity = highRiskCount >= 3 ? "High" : "Medium"
+        };
     }
 }

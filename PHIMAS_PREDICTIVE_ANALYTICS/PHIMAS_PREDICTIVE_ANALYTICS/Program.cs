@@ -1,3 +1,4 @@
+using System.Data.Common;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,7 @@ if (string.IsNullOrWhiteSpace(connectionString))
 {
     throw new InvalidOperationException("A MySQL connection string is required. Configure ConnectionStrings:DefaultConnection, MYSQLCONNSTR_DefaultConnection, DATABASE_URL, or Database/DB_* settings.");
 }
+var mySqlOptions = ResolveMySqlConnectionOptions(connectionString, builder.Environment);
 
 bool? configuredSeedDemoData = builder.Configuration.GetValue<bool?>("AppStartup:SeedDemoData");
 var shouldSeedDemoData = configuredSeedDemoData ?? builder.Environment.IsDevelopment();
@@ -53,8 +55,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
-        connectionString,
-        ServerVersion.AutoDetect(connectionString)));
+        mySqlOptions.ConnectionString,
+        mySqlOptions.ServerVersion));
 
 builder.Services.AddScoped<PredictiveAnalyticsService>();
 builder.Services.AddScoped<AIAssistantService>();
@@ -65,7 +67,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await SeedData.EnsureSchemaAsync(context);
+    await SeedData.ValidateSchemaAsync(context);
     if (shouldSeedDemoData)
     {
         await SeedData.EnsureSeedDataAsync(context);
@@ -105,6 +107,23 @@ static string? ResolveConnectionString(IConfiguration configuration)
         ?? configuration["MYSQLCONNSTR_DefaultConnection"]
         ?? BuildConnectionStringFromSettings(configuration)
         ?? configuration.GetConnectionString("DefaultConnection");
+}
+
+static (string ConnectionString, ServerVersion ServerVersion) ResolveMySqlConnectionOptions(
+    string connectionString,
+    IWebHostEnvironment environment)
+{
+    var normalizedConnectionString = NormalizeMySqlConnectionString(connectionString);
+
+    try
+    {
+        return (normalizedConnectionString, ServerVersion.AutoDetect(normalizedConnectionString));
+    }
+    catch (Exception ex) when (environment.IsDevelopment() && IsSslNegotiationFailure(ex))
+    {
+        var localVerificationConnectionString = BuildLocalVerificationConnectionString(normalizedConnectionString);
+        return (localVerificationConnectionString, ServerVersion.AutoDetect(localVerificationConnectionString));
+    }
 }
 
 static string? BuildConnectionStringFromDatabaseUrl(string? databaseUrl)
@@ -171,6 +190,68 @@ static string BuildConnectionString(
     string sslMode)
 {
     return $"server={host};port={port};database={database};user={user};password={password};SslMode={sslMode};AllowPublicKeyRetrieval=true;";
+}
+
+static string NormalizeMySqlConnectionString(string connectionString)
+{
+    var builder = new DbConnectionStringBuilder
+    {
+        ConnectionString = connectionString
+    };
+
+    if (!builder.TryGetValue("AllowPublicKeyRetrieval", out _))
+    {
+        builder["AllowPublicKeyRetrieval"] = "true";
+    }
+
+    if (!builder.TryGetValue("SslMode", out var sslModeValue) || string.IsNullOrWhiteSpace(Convert.ToString(sslModeValue)))
+    {
+        builder["SslMode"] = "Preferred";
+    }
+
+    return builder.ConnectionString;
+}
+
+static string BuildLocalVerificationConnectionString(string connectionString)
+{
+    var builder = new DbConnectionStringBuilder
+    {
+        ConnectionString = connectionString
+    };
+
+    builder["SslMode"] = "None";
+    builder["AllowPublicKeyRetrieval"] = "true";
+
+    return builder.ConnectionString;
+}
+
+static bool IsSslNegotiationFailure(Exception exception)
+{
+    for (var current = exception; current is not null; current = current.InnerException)
+    {
+        if (ContainsAny(
+                current.Message,
+                "ssl",
+                "tls",
+                "certificate",
+                "public key retrieval",
+                "secure connection"))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool ContainsAny(string? text, params string[] fragments)
+{
+    if (string.IsNullOrWhiteSpace(text))
+    {
+        return false;
+    }
+
+    return fragments.Any(fragment => text.Contains(fragment, StringComparison.OrdinalIgnoreCase));
 }
 
 static string? GetQueryValue(Uri uri, string key)

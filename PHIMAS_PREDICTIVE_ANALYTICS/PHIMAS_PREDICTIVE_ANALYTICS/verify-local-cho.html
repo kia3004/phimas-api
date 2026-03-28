@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CHO Dashboard - PHIMAS CHO</title>
+    <script>document.documentElement.setAttribute("data-theme", localStorage.getItem("phimas-theme") || "light");</script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="/css/phimas.css?v=LGHF_NLsW1lC-e6Ek3LwuFy0S37lM5ysewwcthMUGD0" />
+</head>
+<body>
+    <div class="phimas-shell">
+        <aside class="phimas-sidebar">
+            <div class="phimas-brand">
+                <img src="/images/LOGOP.png" alt="PHIMAS logo" />
+                <div>
+                    <h1>PHIMAS CHO</h1>
+                    <p>City health office command view</p>
+                </div>
+            </div>
+
+            <nav class="phimas-nav">
+                <a class="phimas-nav-link is-active" href="/CHO/Dashboard"><span><i class="bi bi-speedometer2"></i></span>Dashboard</a>
+                <a class="phimas-nav-link " href="/CHO/Households"><span><i class="bi bi-houses-fill"></i></span>Households</a>
+                <a class="phimas-nav-link " href="/CHO/HealthRecords"><span><i class="bi bi-heart-pulse-fill"></i></span>Health Records</a>
+                <a class="phimas-nav-link " href="/CHO/PredictiveAnalytics"><span><i class="bi bi-activity"></i></span>Predictive Analytics</a>
+                <a class="phimas-nav-link " href="/CHO/TaskMonitoring"><span><i class="bi bi-kanban-fill"></i></span>Task Monitoring</a>
+                <a class="phimas-nav-link " href="/CHO/Reports"><span><i class="bi bi-file-earmark-bar-graph-fill"></i></span>Reports</a>
+                <a class="phimas-nav-link " href="/CHO/AccountSet"><span><i class="bi bi-person-circle"></i></span>Account</a>
+            </nav>
+
+            <div class="phimas-sidebar-footer">
+                <a class="phimas-nav-link" href="/Account/SignOut"><span><i class="bi bi-box-arrow-right"></i></span>Sign out</a>
+            </div>
+        </aside>
+
+        <main class="phimas-main">
+            <header class="phimas-header">
+                <div>
+                    <h2>CHO Dashboard</h2>
+                    <p>Signed in as Dr. Elena Rivera</p>
+                </div>
+                <label class="theme-switch">
+                    <i class="bi bi-sun-fill"></i>
+                    <span>Day / Night</span>
+                    <input type="checkbox" class="form-check-input mt-0" data-theme-toggle />
+                </label>
+            </header>
+
+            
+<div class="section-grid">
+    <section class="metric-grid">
+            <article class="metric-card accent-red">
+                <small>Disease Cases</small>
+                <h3>645</h3>
+                <p>All captured records</p>
+            </article>
+            <article class="metric-card accent-amber">
+                <small>High-Risk Households</small>
+                <h3>5</h3>
+                <p>Risk score &gt;= 70</p>
+            </article>
+            <article class="metric-card accent-green">
+                <small>Active BHWs</small>
+                <h3>2</h3>
+                <p>Available workers in field</p>
+            </article>
+            <article class="metric-card accent-purple">
+                <small>Outbreak Alerts</small>
+                <h3>0</h3>
+                <p>Forecast confidence &gt;= 80%</p>
+            </article>
+    </section>
+
+    <section class="page-grid-2">
+        <div class="section-grid">
+            <div class="surface-card chart-card">
+                <h3 class="section-title">Disease Trend</h3>
+                <p class="section-subtitle">Cases recorded over the last several days.</p>
+                <canvas id="diseaseTrendChart"></canvas>
+            </div>
+
+            <div class="surface-card chart-card">
+                <h3 class="section-title">High-Risk Household Profile</h3>
+                <p class="section-subtitle">Households with the highest computed risk score.</p>
+                <canvas id="riskProfileChart"></canvas>
+            </div>
+        </div>
+
+        <div class="section-grid">
+            <div class="surface-card p-4">
+                <h3 class="section-title">Forecasts and Alerts</h3>
+                <p class="section-subtitle">Latest predictive forecasts, using stored module results when available.</p>
+                <div class="stack-list">
+                            <div class="stack-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h4>Leptospirosis</h4>
+                                    <span class="severity-pill medium">74%</span>
+                                </div>
+                                <p>67 current cases, 31 projected next cycle in San Vicente.</p>
+                            </div>
+                            <div class="stack-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h4>Influenza</h4>
+                                    <span class="severity-pill medium">77%</span>
+                                </div>
+                                <p>61 current cases, 29 projected next cycle in Catbangen.</p>
+                            </div>
+                            <div class="stack-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h4>Dengue</h4>
+                                    <span class="severity-pill medium">79%</span>
+                                </div>
+                                <p>57 current cases, 26 projected next cycle in Sevilla.</p>
+                            </div>
+                            <div class="stack-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h4>Acute Gastroenteritis</h4>
+                                    <span class="severity-pill medium">58%</span>
+                                </div>
+                                <p>1 current cases, 2 projected next cycle in Sevilla.</p>
+                            </div>
+                </div>
+            </div>
+
+            <div class="surface-card p-4">
+                <h3 class="section-title">AI Assistant</h3>
+                <p class="section-subtitle">Actionable insights for CHO review.</p>
+                <div class="insight-list">
+                        <div class="insight-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h4>Health trend summary</h4>
+                                <span class="severity-pill high">High</span>
+                            </div>
+                            <p>5 households are currently tagged as high risk based on recent records and household size.</p>
+                        </div>
+                        <div class="insight-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h4>Field deployment recommendation</h4>
+                                <span class="severity-pill medium">Medium</span>
+                            </div>
+                            <p>3 tasks need reassignment or follow-up to keep BHW response times within target.</p>
+                        </div>
+                        <div class="insight-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h4>Inventory alert</h4>
+                                <span class="severity-pill high">High</span>
+                            </div>
+                            <p>2 inventory items are at or below threshold and should be replenished.</p>
+                        </div>
+                        <div class="insight-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h4>Potential outbreak signal</h4>
+                                <span class="severity-pill medium">Medium</span>
+                            </div>
+                            <p>Leptospirosis shows the strongest projected increase in San Vicente with 74% confidence.</p>
+                        </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="table-shell">
+        <div class="toolbar">
+            <div>
+                <h3 class="section-title">High-Risk Households</h3>
+                <p class="section-subtitle">Priority households identified by predictive analytics.</p>
+            </div>
+            <a class="btn btn-success" href="/CHO/TaskMonitoring">Open Task Monitoring</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-borderless align-middle">
+                <thead>
+                    <tr>
+                        <th>Household</th>
+                        <th>Address</th>
+                        <th>Members</th>
+                        <th>Risk Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                        <tr>
+                            <td>Juan Dela Cruz</td>
+                            <td>Sevilla, Zone 4, San Fernando City</td>
+                            <td>5</td>
+                            <td><span class="severity-pill high">100</span></td>
+                        </tr>
+                        <tr>
+                            <td>Ana Villanueva</td>
+                            <td>Catbangen, Purok 2, San Fernando City</td>
+                            <td>4</td>
+                            <td><span class="severity-pill high">100</span></td>
+                        </tr>
+                        <tr>
+                            <td>Pedro Santos</td>
+                            <td>San Vicente, Zone 1, San Fernando City</td>
+                            <td>6</td>
+                            <td><span class="severity-pill high">100</span></td>
+                        </tr>
+                        <tr>
+                            <td>Maricel Ramos</td>
+                            <td>Sevilla, Zone 2, San Fernando City</td>
+                            <td>3</td>
+                            <td><span class="severity-pill high">100</span></td>
+                        </tr>
+                        <tr>
+                            <td>Carlos Reyes</td>
+                            <td>Catbangen, Purok 5, San Fernando City</td>
+                            <td>7</td>
+                            <td><span class="severity-pill high">100</span></td>
+                        </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+
+            <p class="footer-note">Synchronized web dashboard for CHO analytics and outbreak response.</p>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/site.js?v=BXfumuYvVUlKps1D7_a1dwdlyzLo2bc4La1EsFrglXM"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const diseaseTrend = [{"Label":"Mar 23","Value":32},{"Label":"Mar 24","Value":1},{"Label":"Mar 25","Value":55},{"Label":"Mar 26","Value":0},{"Label":"Mar 27","Value":0},{"Label":"Mar 28","Value":0}];
+        const riskTrend = [{"Label":"Juan Dela Cruz","Value":100},{"Label":"Ana Villanueva","Value":100},{"Label":"Pedro Santos","Value":100},{"Label":"Maricel Ramos","Value":100},{"Label":"Carlos Reyes","Value":100}];
+
+        new Chart(document.getElementById("diseaseTrendChart"), {
+            type: "line",
+            data: {
+                labels: diseaseTrend.map(item => item.label),
+                datasets: [{
+                    label: "Cases",
+                    data: diseaseTrend.map(item => item.value),
+                    borderColor: "#0f7a4c",
+                    backgroundColor: "rgba(15, 122, 76, 0.15)",
+                    fill: true,
+                    tension: 0.3
+                }]
+            }
+        });
+
+        new Chart(document.getElementById("riskProfileChart"), {
+            type: "bar",
+            data: {
+                labels: riskTrend.map(item => item.label),
+                datasets: [{
+                    label: "Risk Score",
+                    data: riskTrend.map(item => item.value),
+                    backgroundColor: "rgba(214, 167, 44, 0.72)"
+                }]
+            },
+            options: {
+                indexAxis: "y"
+            }
+        });
+    </script>
+
+</body>
+</html>

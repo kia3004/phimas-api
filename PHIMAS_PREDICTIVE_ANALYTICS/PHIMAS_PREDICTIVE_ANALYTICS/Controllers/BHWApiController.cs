@@ -483,7 +483,7 @@ public class BHWApiController : ControllerBase
     [HttpGet("insights")]
     public async Task<IActionResult> GetInsights([FromQuery] int userId)
     {
-        var insights = await _aiAssistantService.BuildInsightsAsync();
+        var insights = await _aiAssistantService.BuildBhwInsightsAsync();
         return Ok(insights.Select((insight, index) => new
         {
             id = index + 1,

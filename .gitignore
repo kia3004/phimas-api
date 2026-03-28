@@ -1,0 +1,31 @@
+# IDE / editor
+.vs/
+**/.vs/
+**/.idea/caches/
+**/.idea/workspace.xml
+**/.idea/assetWizardSettings.xml
+**/.idea/deploymentTargetSelector.xml
+**/.idea/deviceManager.xml
+
+# Build outputs
+_buildcheck/
+**/.gradle/
+**/build/
+**/bin/
+**/obj/
+
+# Android local machine config
+PHIMAS_BHW_MOBILE/local.properties
+
+# Python
+**/__pycache__/
+*.py[cod]
+
+# OS / logs
+.DS_Store
+Thumbs.db
+*.log
+*.crash
+*.err
+*.out
+*.user

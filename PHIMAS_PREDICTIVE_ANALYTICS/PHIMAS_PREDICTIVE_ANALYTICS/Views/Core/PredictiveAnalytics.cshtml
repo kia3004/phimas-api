@@ -16,7 +16,7 @@
 
         <div class="surface-card p-4">
             <h3 class="section-title">Latest Stored Analysis</h3>
-            <p class="section-subtitle">Data pulled directly from the `predictiveanalyses` table.</p>
+            <p class="section-subtitle">Data pulled directly from the `predictive_analysis` table.</p>
             @if (Model.LatestAnalysis != null)
             {
                 <div class="stack-item">
@@ -25,22 +25,38 @@
                     <span class="severity-pill @(Model.LatestAnalysis.ConfidenceScore >= 0.8f ? "high" : "medium")">@($"{Model.LatestAnalysis.ConfidenceScore:P0}")</span>
                 </div>
             }
+            else
+            {
+                <div class="stack-item">
+                    <p class="mb-0 text-secondary">No saved predictive-module analysis is available yet.</p>
+                </div>
+            }
         </div>
     </section>
 
     <section class="page-grid-2">
         <div class="surface-card p-4">
             <h3 class="section-title">Forecast Detail</h3>
+            <p class="section-subtitle">Latest disease forecasts shown to the CHO dashboard, with stored module results preferred.</p>
             <div class="stack-list">
-                @foreach (var forecast in Model.Forecasts)
+                @if (!Model.Forecasts.Any())
                 {
                     <div class="stack-item">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h4>@forecast.Disease</h4>
-                            <span class="severity-pill @(forecast.ConfidenceScore >= 0.8f ? "high" : "medium")">@($"{forecast.ConfidenceScore:P0}")</span>
-                        </div>
-                        <p>@forecast.CurrentCases current cases, @forecast.PredictedCases projected in @forecast.HighRiskBarangay.</p>
+                        <p class="mb-0 text-secondary">No saved forecasts are available yet.</p>
                     </div>
+                }
+                else
+                {
+                    @foreach (var forecast in Model.Forecasts)
+                    {
+                        <div class="stack-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h4>@forecast.Disease</h4>
+                                <span class="severity-pill @(forecast.ConfidenceScore >= 0.8f ? "high" : "medium")">@($"{forecast.ConfidenceScore:P0}")</span>
+                            </div>
+                            <p>@forecast.CurrentCases current cases, @forecast.PredictedCases projected in @forecast.HighRiskBarangay.</p>
+                        </div>
+                    }
                 }
             </div>
         </div>

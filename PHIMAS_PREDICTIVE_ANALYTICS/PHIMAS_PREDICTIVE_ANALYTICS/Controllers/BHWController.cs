@@ -62,7 +62,7 @@ public class BHWController : AppControllerBase
                 .OrderByDescending(report => report.DateGenerated)
                 .Take(4)
                 .ToListAsync(),
-            Insights = (await _aiAssistantService.BuildInsightsAsync()).Take(3).ToList()
+            Insights = await _aiAssistantService.BuildBhwInsightsAsync()
         };
 
         return View(model);
@@ -339,7 +339,7 @@ public class BHWController : AppControllerBase
         {
             Reports = await query.OrderByDescending(report => report.DateGenerated).ToListAsync(),
             Users = [currentUser],
-            Insights = (await _aiAssistantService.BuildInsightsAsync()).Take(2).ToList(),
+            Insights = await _aiAssistantService.BuildBhwInsightsAsync(),
             AssignedArea = currentUser.AssignedArea?.Trim() ?? string.Empty,
             Search = search,
             TotalScope = await Context.Households.CountAsync(),

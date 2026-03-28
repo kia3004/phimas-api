@@ -15,6 +15,37 @@ public static class SeedData
         new("Catbangen, Purok 5, San Fernando City", 66, "Carlos Reyes", ["Luz Reyes", "Paula Reyes", "Ramon Reyes", "Joy Reyes", "Nina Reyes", "Leo Reyes"])
     ];
 
+    private static readonly string[] RequiredTables =
+    [
+        "users",
+        "households",
+        "household_members",
+        "health_records",
+        "inventory",
+        "predictive_analysis",
+        "reports",
+        "task_assignments"
+    ];
+
+    public static async Task ValidateSchemaAsync(AppDbContext context)
+    {
+        var missingTables = new List<string>();
+
+        foreach (var tableName in RequiredTables)
+        {
+            if (!await TableExistsAsync(context, tableName))
+            {
+                missingTables.Add(tableName);
+            }
+        }
+
+        if (missingTables.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"Required database tables are missing: {string.Join(", ", missingTables)}. Startup schema creation is disabled; provision the database schema before running the app.");
+        }
+    }
+
     public static async Task EnsureSchemaAsync(AppDbContext context)
     {
         await context.Database.ExecuteSqlRawAsync(

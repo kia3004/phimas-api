@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PHIMAS_PREDICTIVE_ANALYTICS.Data;
+using PHIMAS_PREDICTIVE_ANALYTICS.Models;
 using PHIMAS_PREDICTIVE_ANALYTICS.Models.ViewModels;
 
 namespace PHIMAS_PREDICTIVE_ANALYTICS.Services;
@@ -75,7 +76,34 @@ public class PredictiveAnalyticsService
             .ToList();
     }
 
-    public async Task<List<DiseaseForecastViewModel>> GenerateForecastsAsync()
+    public async Task<List<DiseaseForecastViewModel>> GetForecastsAsync(int limit = 5)
+    {
+        var storedForecasts = await GetStoredForecastsAsync(limit);
+        return storedForecasts.Count > 0
+            ? storedForecasts
+            : await GenerateFallbackForecastsAsync(limit);
+    }
+
+    public async Task<PredictiveAnalysis?> GetLatestStoredAnalysisAsync()
+    {
+        var analyses = await _context.PredictiveAnalysis
+            .AsNoTracking()
+            .OrderByDescending(item => item.DateGenerated)
+            .ThenByDescending(item => item.ConfidenceScore)
+            .ToListAsync();
+
+        return analyses
+            .Where(item => !string.IsNullOrWhiteSpace(item.Disease))
+            .GroupBy(item => item.Disease.Trim(), StringComparer.OrdinalIgnoreCase)
+            .Select(SelectWinningAnalysis)
+            .OrderByDescending(item => item.DateGenerated.Date)
+            .ThenByDescending(item => item.PredictedCases ?? 0)
+            .ThenByDescending(item => NormalizeConfidence(item.ConfidenceScore))
+            .ThenByDescending(item => item.DateGenerated)
+            .FirstOrDefault();
+    }
+
+    public async Task<List<DiseaseForecastViewModel>> GenerateFallbackForecastsAsync(int limit = 5)
     {
         var since = DateTime.UtcNow.AddDays(-30);
         var recentRecords = await _context.HealthRecords
@@ -87,7 +115,7 @@ public class PredictiveAnalyticsService
         var grouped = recentRecords
             .GroupBy(record => record.Disease)
             .OrderByDescending(group => group.Count())
-            .Take(5)
+            .Take(limit)
             .ToList();
 
         var forecasts = new List<DiseaseForecastViewModel>();
@@ -115,48 +143,81 @@ public class PredictiveAnalyticsService
             });
         }
 
-        await PersistForecastsAsync(forecasts);
         return forecasts;
     }
 
     public async Task<PredictiveAnalyticsPageViewModel> BuildPredictivePageAsync()
     {
-        var forecasts = await GenerateForecastsAsync();
         return new PredictiveAnalyticsPageViewModel
         {
-            LatestAnalysis = await _context.PredictiveAnalysis.OrderByDescending(item => item.DateGenerated).FirstOrDefaultAsync(),
-            Forecasts = forecasts,
+            LatestAnalysis = await GetLatestStoredAnalysisAsync(),
+            Forecasts = await GetForecastsAsync(),
             DiseaseTrend = await GetDiseaseTrendAsync()
         };
     }
 
-    private async Task PersistForecastsAsync(IEnumerable<DiseaseForecastViewModel> forecasts)
+    private async Task<List<DiseaseForecastViewModel>> GetStoredForecastsAsync(int limit)
     {
-        foreach (var forecast in forecasts)
-        {
-            var existing = await _context.PredictiveAnalysis.FirstOrDefaultAsync(
-                analysis => analysis.Disease == forecast.Disease && analysis.DateGenerated.Date == DateTime.UtcNow.Date);
+        var analyses = await _context.PredictiveAnalysis
+            .AsNoTracking()
+            .OrderByDescending(item => item.DateGenerated)
+            .ThenByDescending(item => item.ConfidenceScore)
+            .ToListAsync();
 
-            if (existing == null)
-            {
-                await _context.PredictiveAnalysis.AddAsync(new()
-                {
-                    DateGenerated = DateTime.UtcNow,
-                    Disease = forecast.Disease,
-                    PredictedCases = forecast.PredictedCases,
-                    HighRiskBarangay = forecast.HighRiskBarangay,
-                    ConfidenceScore = forecast.ConfidenceScore
-                });
-            }
-            else
-            {
-                existing.PredictedCases = forecast.PredictedCases;
-                existing.HighRiskBarangay = forecast.HighRiskBarangay;
-                existing.ConfidenceScore = forecast.ConfidenceScore;
-            }
+        var latestAnalyses = analyses
+            .Where(item => !string.IsNullOrWhiteSpace(item.Disease))
+            .GroupBy(item => item.Disease.Trim(), StringComparer.OrdinalIgnoreCase)
+            .Select(SelectWinningAnalysis)
+            .OrderByDescending(item => item.DateGenerated.Date)
+            .ThenByDescending(item => item.PredictedCases ?? 0)
+            .ThenByDescending(item => NormalizeConfidence(item.ConfidenceScore))
+            .ThenByDescending(item => item.DateGenerated)
+            .Take(limit)
+            .ToList();
+
+        if (latestAnalyses.Count == 0)
+        {
+            return [];
         }
 
-        await _context.SaveChangesAsync();
+        var since = DateTime.UtcNow.AddDays(-30);
+        var currentCaseCounts = await _context.HealthRecords
+            .Where(record => record.DateRecorded >= since)
+            .GroupBy(record => record.Disease)
+            .Select(group => new
+            {
+                Disease = group.Key,
+                Count = group.Count()
+            })
+            .ToListAsync();
+
+        var currentCaseLookup = currentCaseCounts
+            .Where(item => !string.IsNullOrWhiteSpace(item.Disease))
+            .GroupBy(item => item.Disease.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Sum(item => item.Count), StringComparer.OrdinalIgnoreCase);
+
+        return latestAnalyses
+            .Select(analysis => new DiseaseForecastViewModel
+            {
+                Disease = analysis.Disease,
+                CurrentCases = currentCaseLookup.TryGetValue(analysis.Disease, out var currentCases) ? currentCases : 0,
+                PredictedCases = analysis.PredictedCases ?? 0,
+                ConfidenceScore = NormalizeConfidence(analysis.ConfidenceScore),
+                HighRiskBarangay = analysis.HighRiskBarangay
+            })
+            .ToList();
+    }
+
+    private static PredictiveAnalysis SelectWinningAnalysis(IGrouping<string, PredictiveAnalysis> group)
+    {
+        var latestDate = group.Max(item => item.DateGenerated.Date);
+
+        return group
+            .Where(item => item.DateGenerated.Date == latestDate)
+            .OrderByDescending(item => item.PredictedCases ?? 0)
+            .ThenByDescending(item => NormalizeConfidence(item.ConfidenceScore))
+            .ThenByDescending(item => item.DateGenerated)
+            .First();
     }
 
     private static int GetDiseaseWeight(string disease)
@@ -187,5 +248,12 @@ public class PredictiveAnalyticsService
         }
 
         return address.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? address;
+    }
+
+    private static float NormalizeConfidence(float score)
+    {
+        return score > 1f
+            ? Math.Clamp(score / 100f, 0f, 1f)
+            : Math.Clamp(score, 0f, 1f);
     }
 }

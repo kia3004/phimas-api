@@ -472,7 +472,7 @@ private fun DashboardScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Assigned tasks, consultation logs, and alerts here are pulled from the same API used by the web dashboard.",
+                            text = "Assigned tasks, consultation logs, and the health trend summary here are pulled from the same API used by the web dashboard.",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
@@ -559,15 +559,15 @@ private fun DashboardScreen(
 
         item {
             SectionHeading(
-                title = "AI Guidance",
-                subtitle = "System insights pulled from the backend assistant service.",
+                title = "Health Trend Summary",
+                subtitle = "BHW guidance is limited to the shared health trend overview.",
             )
         }
 
         if (state.insights.isEmpty()) {
             item { EmptyStateCard("No guidance available right now.") }
         } else {
-            items(state.insights.take(3), key = { it.id }) { insight ->
+            items(state.insights.take(1), key = { it.id }) { insight ->
                 InsightCard(insight = insight)
             }
         }

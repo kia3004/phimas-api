@@ -28,7 +28,7 @@ public class CHOController : AppControllerBase
     {
         ViewData["Active"] = "Dashboard";
         await _predictiveAnalyticsService.RecalculateHouseholdRisksAsync();
-        var forecasts = await _predictiveAnalyticsService.GenerateForecastsAsync();
+        var forecasts = await _predictiveAnalyticsService.GetForecastsAsync();
 
         var model = new ChoDashboardViewModel
         {
