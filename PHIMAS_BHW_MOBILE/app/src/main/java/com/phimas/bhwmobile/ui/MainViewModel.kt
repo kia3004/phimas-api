@@ -64,7 +64,7 @@ class MainViewModel(
                 _state.value = _state.value.copy(
                     isInitializing = false,
                     isAuthenticating = false,
-                    authError = exception.message,
+                    authError = "Invalid server configuration.",
                 )
                 return@launch
             }
@@ -83,7 +83,7 @@ class MainViewModel(
             } catch (exception: Exception) {
                 _state.value = _state.value.copy(
                     isAuthenticating = false,
-                    authError = exception.toUserMessage(normalizedBaseUrl),
+                    authError = exception.toUserMessage(),
                 )
             }
         }
@@ -102,13 +102,13 @@ class MainViewModel(
             val normalizedBaseUrl = try {
                 repository.updateApiBaseUrl(apiBaseUrl)
             } catch (exception: IllegalArgumentException) {
-                _state.value = _state.value.copy(userMessage = exception.message)
+                _state.value = _state.value.copy(userMessage = "Invalid server URL.")
                 return@launch
             }
 
             _state.value = _state.value.copy(
                 apiBaseUrl = normalizedBaseUrl,
-                userMessage = "Server URL saved.",
+                userMessage = "Server settings updated.",
             )
 
             val session = _state.value.session
@@ -116,7 +116,7 @@ class MainViewModel(
                 loadBootstrap(
                     userId = session.userId,
                     silent = true,
-                    successMessage = "Connected to $normalizedBaseUrl",
+                    successMessage = "Connected to server.",
                 )
             }
         }
@@ -261,7 +261,7 @@ class MainViewModel(
             val bootstrap = repository.loadBootstrap(userId)
             applyBootstrap(bootstrap, successMessage)
         } catch (exception: Exception) {
-            val message = exception.toUserMessage(_state.value.apiBaseUrl)
+            val message = exception.toUserMessage()
             val latest = _state.value
             _state.value = latest.copy(
                 isInitializing = false,
@@ -308,7 +308,7 @@ class MainViewModel(
                 _state.value = _state.value.copy(
                     isWorking = false,
                     isRefreshing = false,
-                    userMessage = exception.toUserMessage(_state.value.apiBaseUrl),
+                    userMessage = exception.toUserMessage(),
                 )
             }
         }
@@ -332,7 +332,7 @@ class MainViewModel(
     }
 }
 
-private fun Throwable.toUserMessage(apiBaseUrl: String): String {
+private fun Throwable.toUserMessage(): String {
     if (this is HttpException) {
         val rawBody = response()?.errorBody()?.string().orEmpty()
         val extractedMessage = "\"message\"\\s*:\\s*\"([^\"]+)\"".toRegex()
@@ -349,7 +349,7 @@ private fun Throwable.toUserMessage(apiBaseUrl: String): String {
     }
 
     if (hasCause<UnknownHostException>() || hasCause<ConnectException>() || hasCause<SocketTimeoutException>()) {
-        return "Cannot reach PHIMAS API at $apiBaseUrl. Verify the Render service is online, or confirm the local server URL is reachable from this device."
+        return "Cannot reach PHIMAS API. Verify the server is online or confirm your network connection."
     }
 
     return message?.takeIf { it.isNotBlank() } ?: "Unexpected error."

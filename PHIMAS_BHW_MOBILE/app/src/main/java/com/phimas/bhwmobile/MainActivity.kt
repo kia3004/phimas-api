@@ -175,7 +175,6 @@ private fun BhwApp(viewModel: MainViewModel) {
             onUpdateProfile = viewModel::updateProfile,
             onChangePassword = viewModel::changePassword,
             onUploadProfilePicture = viewModel::uploadProfilePicture,
-            onUpdateApiBaseUrl = viewModel::updateApiBaseUrl,
         )
     }
 }
@@ -189,7 +188,7 @@ private fun LoadingScreen() {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             CircularProgressIndicator()
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Loading BHW workspace...")
+            Text("Loading...")
         }
     }
 }
@@ -235,7 +234,7 @@ private fun LoginScreen(
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = "Sign in to your BHW account",
+                    text = "Sign in to your account",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
@@ -295,7 +294,6 @@ private fun MainShell(
     onUpdateProfile: (String, String, String, String) -> Unit,
     onChangePassword: (String, String) -> Unit,
     onUploadProfilePicture: (String) -> Unit,
-    onUpdateApiBaseUrl: (String) -> Unit,
 ) {
     var currentTab by rememberSaveable { mutableStateOf(AppTab.Dashboard.name) }
     val selectedTab = remember(currentTab) { AppTab.valueOf(currentTab) }
@@ -437,7 +435,6 @@ private fun MainShell(
                     onUpdateProfile = onUpdateProfile,
                     onChangePassword = onChangePassword,
                     onUploadProfilePicture = onUploadProfilePicture,
-                    onUpdateApiBaseUrl = onUpdateApiBaseUrl,
                 )
             }
         }
@@ -469,11 +466,6 @@ private fun DashboardScreen(
                             text = "Good day, ${state.profile?.bhwName ?: summary?.bhwName.orEmpty()}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Assigned tasks, consultation logs, and the health trend summary here are pulled from the same API used by the web dashboard.",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     Spacer(modifier = Modifier.width(16.dp))
@@ -530,7 +522,7 @@ private fun DashboardScreen(
         item {
             SectionHeading(
                 title = "Today's Tasks",
-                subtitle = "These items mirror the web BHW task queue.",
+                subtitle = "",
             )
         }
 
@@ -545,7 +537,7 @@ private fun DashboardScreen(
         item {
             SectionHeading(
                 title = "Recent Consultation Logs",
-                subtitle = "Latest reports you submitted through mobile or web.",
+                subtitle = "Latest reports you submitted.",
             )
         }
 
@@ -560,7 +552,7 @@ private fun DashboardScreen(
         item {
             SectionHeading(
                 title = "Health Trend Summary",
-                subtitle = "BHW guidance is limited to the shared health trend overview.",
+                subtitle = "",
             )
         }
 
@@ -588,7 +580,7 @@ private fun TasksScreen(
         item {
             SectionHeading(
                 title = "Assigned Tasks",
-                subtitle = "Update status here and the shared web dashboard will reflect the same data.",
+                subtitle = "",
             )
         }
 
@@ -637,7 +629,7 @@ private fun HealthRecordsScreen(
         item {
             SectionHeading(
                 title = "Submit Health Record",
-                subtitle = "Create the patient and household inline when needed. The API creates or reuses household members, then stores only PatientID in the health record.",
+                subtitle = "Create patient and household records.",
             )
         }
 
@@ -700,11 +692,6 @@ private fun HealthRecordsScreen(
                         label = { Text("Symptoms") },
                         minLines = 4,
                     )
-                    Text(
-                        text = "Provide the household address here. Patient, household, and emergency-contact details are resolved through joins after save.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
                     Button(
                         onClick = {
                             onSubmitRecord(
@@ -745,7 +732,7 @@ private fun HealthRecordsScreen(
         item {
             SectionHeading(
                 title = "My Submitted Records",
-                subtitle = "Latest entries from the shared backend.",
+                subtitle = "Latest entries.",
             )
         }
 
@@ -777,11 +764,6 @@ private fun InlineHouseholdDetailsCard(
                 label = { Text("Household Address") },
                 placeholder = { Text("Barangay, street, house/unit, landmark") },
                 minLines = 3,
-            )
-            Text(
-                text = "Use the household address that should be used for duplicate checks and patient-to-household matching.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             OutlinedTextField(
                 value = emergencyContactName,
@@ -833,7 +815,7 @@ private fun ConsultationLogsScreen(
         item {
             SectionHeading(
                 title = "Submit Consultation Log",
-                subtitle = "Enter a consultation log manually. The submission creates or reuses a household and links the patient and emergency contact to that report.",
+                subtitle = "Enter a consultation log manually.",
             )
         }
 
@@ -924,7 +906,7 @@ private fun ConsultationLogsScreen(
         item {
             SectionHeading(
                 title = "Saved Consultation Logs",
-                subtitle = "Historical mobile and web submissions from the same shared API.",
+                subtitle = "Historical submissions.",
             )
         }
 
@@ -946,7 +928,6 @@ private fun AccountScreen(
     onUpdateProfile: (String, String, String, String) -> Unit,
     onChangePassword: (String, String) -> Unit,
     onUploadProfilePicture: (String) -> Unit,
-    onUpdateApiBaseUrl: (String) -> Unit,
 ) {
     val context = LocalContext.current
     var fullName by rememberSaveable { mutableStateOf("") }
@@ -955,7 +936,6 @@ private fun AccountScreen(
     var assignedArea by rememberSaveable { mutableStateOf("") }
     var currentPassword by rememberSaveable { mutableStateOf("") }
     var newPassword by rememberSaveable { mutableStateOf("") }
-    var serverUrl by rememberSaveable { mutableStateOf(apiBaseUrl) }
 
     LaunchedEffect(
         profile?.userId,
@@ -969,7 +949,6 @@ private fun AccountScreen(
         email = profile?.email.orEmpty()
         contactNumber = profile?.contactNumber.orEmpty()
         assignedArea = profile?.assignedArea.orEmpty()
-        serverUrl = apiBaseUrl
     }
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -987,7 +966,7 @@ private fun AccountScreen(
     ) {
         SectionHeading(
             title = "Profile",
-            subtitle = "Changes here call the shared API and then reload the latest profile snapshot.",
+            subtitle = "",
         )
 
         SectionCard {
@@ -1072,35 +1051,6 @@ private fun AccountScreen(
         SectionCard {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = "Sync Server",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                OutlinedTextField(
-                    value = serverUrl,
-                    onValueChange = { serverUrl = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Server URL") },
-                    placeholder = { Text("https://phimas-api.onrender.com/") },
-                    singleLine = true,
-                )
-                Text(
-                    text = "Use the same backend URL as the web app. Saving reconnects the mobile app to that shared server.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Button(
-                    onClick = { onUpdateApiBaseUrl(serverUrl) },
-                    enabled = !isBusy && serverUrl.isNotBlank(),
-                ) {
-                    Text("Save Server URL")
-                }
-            }
-        }
-
-        SectionCard {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
                     text = "Password",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
@@ -1137,7 +1087,7 @@ private fun AccountScreen(
         SectionCard {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "Current Account Snapshot",
+                    text = "Account Snapshot",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -1145,7 +1095,6 @@ private fun AccountScreen(
                 InfoLine("Email", profile?.email.orEmpty())
                 InfoLine("Contact", profile?.contactNumber.orEmpty().ifBlank { "Not set" })
                 InfoLine("Assigned Area", profile?.assignedArea.orEmpty().ifBlank { "Not set" })
-                InfoLine("Server URL", apiBaseUrl)
                 InfoLine("Availability", if (profile?.isAvailable == true) "Available" else "Unavailable")
             }
         }
@@ -1384,7 +1333,9 @@ private fun SectionHeading(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(text = title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-        Text(text = subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (subtitle.isNotBlank()) {
+            Text(text = subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 
@@ -1530,16 +1481,25 @@ private fun resolveImageUrl(path: String?, apiBaseUrl: String): String? {
         return null
     }
 
-    return if (path.startsWith("http://") || path.startsWith("https://")) {
-        path
-    } else {
-        "${apiBaseUrl.trimEnd('/')}/${path.trimStart('/')}"
+    return try {
+        if (path.startsWith("http://") || path.startsWith("https://")) {
+            path
+        } else {
+            "${apiBaseUrl.trimEnd('/')}/${path.trimStart('/')}"
+        }
+    } catch (e: Exception) {
+        null
     }
 }
 
 private fun android.content.Context.encodeUriToBase64(uri: Uri): String? {
-    return contentResolver.openInputStream(uri)?.use { stream ->
-        Base64.encodeToString(stream.readBytes(), Base64.NO_WRAP)
+    return try {
+        contentResolver.openInputStream(uri)?.use { stream ->
+            val bytes = stream.readBytes()
+            Base64.encodeToString(bytes, Base64.NO_WRAP)
+        }
+    } catch (e: Exception) {
+        null
     }
 }
 

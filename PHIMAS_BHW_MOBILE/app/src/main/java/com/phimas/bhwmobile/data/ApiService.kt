@@ -38,25 +38,25 @@ interface ApiService {
     suspend fun getDashboard(@Query("userId") userId: Int): DashboardSummaryDto
 
     @GET("api/BHWApi/tasks")
-    suspend fun getTasks(@Query("userId") userId: Int): List<TaskItemDto>
+    suspend fun getTasks(@Query("userId") userId: Int): List<TaskItemDto>?
 
     @POST("api/BHWApi/updateTaskStatus")
     suspend fun updateTaskStatus(@Body request: UpdateTaskStatusRequest): MutationResponse
 
     @GET("api/BHWApi/patients")
-    suspend fun getPatients(@Query("userId") userId: Int): List<PatientDirectoryDto>
+    suspend fun getPatients(@Query("userId") userId: Int): List<PatientDirectoryDto>?
 
     @GET("api/BHWApi/healthrecords")
-    suspend fun getHealthRecords(@Query("userId") userId: Int): List<HealthRecordDto>
+    suspend fun getHealthRecords(@Query("userId") userId: Int): List<HealthRecordDto>?
 
     @POST("api/BHWApi/healthrecords")
     suspend fun submitHealthRecord(@Body request: SubmitHealthRecordRequest): MutationResponse
 
     @GET("api/BHWApi/reports/recent")
-    suspend fun getRecentReports(@Query("userId") userId: Int): List<RecentReportDto>
+    suspend fun getRecentReports(@Query("userId") userId: Int): List<RecentReportDto>?
 
     @GET("api/BHWApi/consultationlogs")
-    suspend fun getConsultationLogs(@Query("userId") userId: Int): ConsultationLogsEnvelope
+    suspend fun getConsultationLogs(@Query("userId") userId: Int): ConsultationLogsEnvelope?
 
     @POST("api/BHWApi/submitConsultation")
     suspend fun submitConsultation(@Body request: SubmitConsultationRequest): MutationResponse
@@ -71,7 +71,7 @@ interface ApiService {
     suspend fun updateAvailability(@Body request: UpdateAvailabilityRequest): MutationResponse
 
     @GET("api/BHWApi/insights")
-    suspend fun getInsights(@Query("userId") userId: Int): List<InsightDto>
+    suspend fun getInsights(@Query("userId") userId: Int): List<InsightDto>?
 
     @POST("api/BHWApi/uploadProfilePic")
     suspend fun uploadProfilePicture(@Body request: UploadProfilePictureRequest): MutationResponse

@@ -32,12 +32,15 @@ data class BootstrapData(
 )
 
 class BhwRepository(
-    defaultBaseUrl: String,
+    private val defaultBaseUrl: String,
     private val sessionStore: SessionStore,
 ) {
-    private var apiBaseUrl: String = normalizeApiBaseUrl(
-        sessionStore.loadApiBaseUrl() ?: defaultBaseUrl,
-    )
+    private var apiBaseUrl: String = try {
+        normalizeApiBaseUrl(sessionStore.loadApiBaseUrl() ?: defaultBaseUrl)
+    } catch (e: Exception) {
+        normalizeApiBaseUrl(defaultBaseUrl)
+    }
+
     private var apiService: ApiService = ApiService.create(apiBaseUrl)
 
     fun getSavedSession(): UserSession? = sessionStore.load()
@@ -45,9 +48,13 @@ class BhwRepository(
     fun getApiBaseUrl(): String = apiBaseUrl
 
     fun updateApiBaseUrl(baseUrl: String): String {
-        apiBaseUrl = normalizeApiBaseUrl(baseUrl)
+        val normalized = normalizeApiBaseUrl(baseUrl)
+        // Verify creation doesn't throw before saving
+        val newService = ApiService.create(normalized)
+        
+        apiBaseUrl = normalized
+        apiService = newService
         sessionStore.saveApiBaseUrl(apiBaseUrl)
-        apiService = ApiService.create(apiBaseUrl)
         return apiBaseUrl
     }
 
@@ -78,12 +85,12 @@ class BhwRepository(
         BootstrapData(
             profile = profileDeferred.await(),
             dashboard = dashboardDeferred.await(),
-            tasks = tasksDeferred.await(),
-            patients = patientsDeferred.await(),
-            healthRecords = healthRecordsDeferred.await(),
-            recentReports = recentReportsDeferred.await(),
-            consultationLogs = consultationLogsDeferred.await().data,
-            insights = insightsDeferred.await(),
+            tasks = tasksDeferred.await() ?: emptyList(),
+            patients = patientsDeferred.await() ?: emptyList(),
+            healthRecords = healthRecordsDeferred.await() ?: emptyList(),
+            recentReports = recentReportsDeferred.await() ?: emptyList(),
+            consultationLogs = consultationLogsDeferred.await()?.data ?: emptyList(),
+            insights = insightsDeferred.await() ?: emptyList(),
         )
     }
 
@@ -202,7 +209,7 @@ class BhwRepository(
 
     private fun normalizeApiBaseUrl(baseUrl: String): String {
         val trimmed = baseUrl.trim()
-        require(trimmed.isNotBlank()) { "https://phimas-api.onrender.com" }
+        if (trimmed.isBlank()) return normalizeApiBaseUrl(defaultBaseUrl)
 
         val normalized = if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
             trimmed
