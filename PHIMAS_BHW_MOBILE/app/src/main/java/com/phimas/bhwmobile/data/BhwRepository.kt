@@ -141,8 +141,14 @@ class BhwRepository(
         return profile
     }
 
-    suspend fun updateTaskStatus(taskId: Int, status: String): MutationResponse {
-        return apiService.updateTaskStatus(UpdateTaskStatusRequest(taskId = taskId, status = status))
+    suspend fun updateTaskStatus(userId: Int, taskId: Int, status: String): MutationResponse {
+        return apiService.updateTaskStatus(
+            UpdateTaskStatusRequest(
+                userId = userId,
+                taskId = taskId,
+                status = status,
+            ),
+        )
     }
 
     suspend fun updateProfile(

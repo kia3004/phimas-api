@@ -98,12 +98,12 @@
                 {
                     <div class="stack-item">
                         <h4>@record.Disease</h4>
-                        <p>@record.Symptoms</p>
+                        <p>@record.DisplaySymptoms</p>
                         <small class="text-secondary">
                             @record.DisplayPatientName -
                             @record.DisplayAddress -
                             Emergency: @(string.IsNullOrWhiteSpace(record.DisplayEmergencyContactName) ? "Not set" : record.DisplayEmergencyContactName)@(string.IsNullOrWhiteSpace(record.DisplayEmergencyContactNumber) ? string.Empty : $" ({record.DisplayEmergencyContactNumber})") -
-                            @record.DateRecorded:g
+                            @record.DateRecorded.ToString("g")
                         </small>
                         <div class="mt-2">
                             <span class="severity-pill @(record.Status.Contains("Escalated") ? "high" : "info")">@record.Status</span>

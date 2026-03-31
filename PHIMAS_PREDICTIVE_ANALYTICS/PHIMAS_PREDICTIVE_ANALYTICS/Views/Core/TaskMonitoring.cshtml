@@ -54,7 +54,7 @@
                     <div class="insight-item">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h4>@recommendation.HouseholdName</h4>
-                            <span class="severity-pill @(recommendation.RiskScore >= 80 ? "high" : "medium")">Risk @recommendation.RiskScore:0</span>
+                            <span class="severity-pill @(recommendation.RiskScore >= 80 ? "high" : "medium")">Risk @($"{recommendation.RiskScore:0}")</span>
                         </div>
                         <p>Suggested BHW: <strong>@recommendation.RecommendedBHWName</strong></p>
                         <p class="mt-2">@recommendation.Reason</p>
@@ -90,7 +90,7 @@
                             <td>@task.HouseholdName</td>
                             <td><span class="status-pill @(task.Priority.ToLower())">@task.Priority</span></td>
                             <td><span class="status-pill @(task.Status == "Done" ? "done" : task.Priority.ToLower())">@task.Status</span></td>
-                            <td>@task.TaskDate:g</td>
+                            <td>@task.TaskDate.ToString("g")</td>
                         </tr>
                     }
                 </tbody>

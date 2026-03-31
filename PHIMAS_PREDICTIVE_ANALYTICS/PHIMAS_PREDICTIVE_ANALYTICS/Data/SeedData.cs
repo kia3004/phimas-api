@@ -146,6 +146,7 @@ public static class SeedData
                 TaskAssignmentID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 BHWID INT NULL,
                 HouseholdID INT NULL,
+                Title VARCHAR(150) NULL,
                 TaskDate DATETIME NOT NULL,
                 Status VARCHAR(50) NOT NULL,
                 Priority VARCHAR(20) NOT NULL,
@@ -302,9 +303,9 @@ public static class SeedData
             var households = await context.Households.OrderByDescending(household => household.RiskScore).ToListAsync();
 
             await context.TaskAssignments.AddRangeAsync(
-                new TaskAssignment { BHWID = bhws[0].UserID, HouseholdID = households[0].HouseholdID, TaskDate = DateTime.Today.AddHours(9), Priority = "High", Status = "Pending", Description = "Validate symptoms and escalate possible severe dengue cases." },
-                new TaskAssignment { BHWID = bhws[1].UserID, HouseholdID = households[1].HouseholdID, TaskDate = DateTime.Today.AddHours(13), Priority = "Medium", Status = "Started", Description = "Review influenza symptoms and reinforce isolation guidance." },
-                new TaskAssignment { BHWID = bhws[2].UserID, HouseholdID = households[2].HouseholdID, TaskDate = DateTime.Today.AddHours(15), Priority = "High", Status = "Ongoing", Description = "Coordinate with CHO on the household's leptospirosis risk." });
+                new TaskAssignment { BHWID = bhws[0].UserID, HouseholdID = households[0].HouseholdID, TaskDate = DateTime.Today.AddHours(9), Priority = "High", Status = "Pending", Title = "Dengue validation visit", Description = "Validate symptoms and escalate possible severe dengue cases." },
+                new TaskAssignment { BHWID = bhws[1].UserID, HouseholdID = households[1].HouseholdID, TaskDate = DateTime.Today.AddHours(13), Priority = "Medium", Status = "Started", Title = "Influenza follow-up", Description = "Review influenza symptoms and reinforce isolation guidance." },
+                new TaskAssignment { BHWID = bhws[2].UserID, HouseholdID = households[2].HouseholdID, TaskDate = DateTime.Today.AddHours(15), Priority = "High", Status = "Ongoing", Title = "Leptospirosis coordination", Description = "Coordinate with CHO on the household's leptospirosis risk." });
             await context.SaveChangesAsync();
         }
 
@@ -372,7 +373,14 @@ public static class SeedData
                 "Priority",
                 "Description"))
         {
-            await TrySqlAsync(context, "INSERT IGNORE INTO task_assignments (TaskAssignmentID, BHWID, HouseholdID, TaskDate, Status, Priority, Description) SELECT TaskAssignmentID, BHWID, HouseholdID, TaskDate, COALESCE(Status, 'Pending'), COALESCE(Priority, 'Medium'), LEFT(COALESCE(Description, 'Migrated task'), 200) FROM taskassignments;");
+            if (await ColumnExistsAsync(context, "taskassignments", "Title"))
+            {
+                await TrySqlAsync(context, "INSERT IGNORE INTO task_assignments (TaskAssignmentID, BHWID, HouseholdID, Title, TaskDate, Status, Priority, Description) SELECT TaskAssignmentID, BHWID, HouseholdID, LEFT(NULLIF(Title, ''), 150), TaskDate, COALESCE(Status, 'Pending'), COALESCE(Priority, 'Medium'), LEFT(COALESCE(Description, 'Migrated task'), 200) FROM taskassignments;");
+            }
+            else
+            {
+                await TrySqlAsync(context, "INSERT IGNORE INTO task_assignments (TaskAssignmentID, BHWID, HouseholdID, TaskDate, Status, Priority, Description) SELECT TaskAssignmentID, BHWID, HouseholdID, TaskDate, COALESCE(Status, 'Pending'), COALESCE(Priority, 'Medium'), LEFT(COALESCE(Description, 'Migrated task'), 200) FROM taskassignments;");
+            }
         }
 
         if (await TableHasColumnsAsync(
@@ -433,6 +441,12 @@ public static class SeedData
             await TrySqlAsync(context, "ALTER TABLE household_members ADD UNIQUE KEY uq_household_members_emergency_contact (EmergencyContactHouseholdID);");
         }
 
+        if (!await ColumnExistsAsync(context, "task_assignments", "Title"))
+        {
+            await TrySqlAsync(context, "ALTER TABLE task_assignments ADD COLUMN Title VARCHAR(150) NULL AFTER HouseholdID;");
+        }
+
+        await TrySqlAsync(context, "ALTER TABLE task_assignments MODIFY Title VARCHAR(150) NULL;");
         await TrySqlAsync(context, "ALTER TABLE health_records MODIFY PatientID INT NOT NULL, MODIFY BHWID INT NOT NULL;");
         await TrySqlAsync(context, "ALTER TABLE reports MODIFY GeneratedBy INT NOT NULL, MODIFY PatientID INT NOT NULL;");
     }

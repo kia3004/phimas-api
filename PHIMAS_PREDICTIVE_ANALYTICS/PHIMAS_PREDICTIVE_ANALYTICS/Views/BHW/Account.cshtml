@@ -8,6 +8,14 @@
     <div class="surface-card p-4">
         <h3 class="section-title">Profile</h3>
         <p class="section-subtitle">Update your field profile and password.</p>
+        @if (TempData["Message"] is string message)
+        {
+            <div class="mb-3 text-success">@message</div>
+        }
+        @if (TempData["Error"] is string error)
+        {
+            <div class="mb-3 text-danger">@error</div>
+        }
         <form asp-action="UpdateProfile" method="post" class="form-grid" enctype="multipart/form-data">
             <input asp-for="UserID" type="hidden" />
             <div>

@@ -31,7 +31,7 @@
                             <h4>@record.Disease</h4>
                             <span class="severity-pill @(record.Status.Contains("Escalated") ? "high" : "info")">@record.Status</span>
                         </div>
-                        <p>@record.Symptoms</p>
+                        <p>@record.DisplaySymptoms</p>
                         <small class="text-secondary">
                             Patient: @record.DisplayPatientName |
                             Household: @record.DisplayAddress |
@@ -39,7 +39,7 @@
                             BHW: @(record.BHW?.FullName ?? "Unassigned")
                         </small>
                         <div class="mt-1">
-                            <small class="text-secondary">@record.DateRecorded:g</small>
+                            <small class="text-secondary">@record.DateRecorded.ToString("g")</small>
                         </div>
                     </div>
                 }

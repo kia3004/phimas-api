@@ -24,7 +24,6 @@ public class TaskAssignment
     public string Priority { get; set; } = "Medium";
 
     [StringLength(150)]
-    [NotMapped]
     public string? Title { get; set; }
 
     [Required]

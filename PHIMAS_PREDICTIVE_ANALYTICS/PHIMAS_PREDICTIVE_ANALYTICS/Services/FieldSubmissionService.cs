@@ -24,6 +24,19 @@ public class FieldSubmissionService
         CreateHealthRecordViewModel form,
         CancellationToken cancellationToken = default)
     {
+        return await UpsertHealthRecordAsync(
+            form.RecordID,
+            bhwId,
+            form,
+            cancellationToken);
+    }
+
+    public async Task<HealthRecord> UpsertHealthRecordAsync(
+        int? recordId,
+        int bhwId,
+        CreateHealthRecordViewModel form,
+        CancellationToken cancellationToken = default)
+    {
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
         var intake = await HouseholdIntakeHelper.ResolveOrCreateAsync(
@@ -36,17 +49,36 @@ public class FieldSubmissionService
                 form.EmergencyContactNumber),
             cancellationToken);
 
-        var record = new HealthRecord
+        HealthRecord record;
+        if (recordId is int resolvedRecordId && resolvedRecordId > 0)
         {
-            BHWID = bhwId,
-            Patient = intake.Patient,
-            DateRecorded = NormalizeDate(form.DateRecorded, DateTime.UtcNow),
-            Disease = HouseholdIntakeHelper.NormalizeRequired(form.Disease, nameof(form.Disease)),
-            Symptoms = HouseholdIntakeHelper.NormalizeRequired(form.Symptoms, nameof(form.Symptoms)),
-            Status = HouseholdIntakeHelper.NormalizeRequired(form.Status, nameof(form.Status))
-        };
+            record = await _context.HealthRecords.FirstOrDefaultAsync(
+                         item => item.RecordID == resolvedRecordId,
+                         cancellationToken)
+                     ?? throw new ArgumentException("Health record not found.", nameof(form.RecordID));
 
-        _context.HealthRecords.Add(record);
+            record.BHWID = bhwId;
+            record.Patient = intake.Patient;
+            record.DateRecorded = NormalizeDate(form.DateRecorded, DateTime.UtcNow);
+            record.Disease = HouseholdIntakeHelper.NormalizeRequired(form.Disease, nameof(form.Disease));
+            record.Symptoms = HouseholdIntakeHelper.NormalizeRequired(form.Symptoms, nameof(form.Symptoms));
+            record.Status = HouseholdIntakeHelper.NormalizeRequired(form.Status, nameof(form.Status));
+        }
+        else
+        {
+            record = new HealthRecord
+            {
+                BHWID = bhwId,
+                Patient = intake.Patient,
+                DateRecorded = NormalizeDate(form.DateRecorded, DateTime.UtcNow),
+                Disease = HouseholdIntakeHelper.NormalizeRequired(form.Disease, nameof(form.Disease)),
+                Symptoms = HouseholdIntakeHelper.NormalizeRequired(form.Symptoms, nameof(form.Symptoms)),
+                Status = HouseholdIntakeHelper.NormalizeRequired(form.Status, nameof(form.Status))
+            };
+
+            _context.HealthRecords.Add(record);
+        }
+
         await _context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
@@ -56,6 +88,19 @@ public class FieldSubmissionService
     }
 
     public async Task<Report> CreateReportAsync(
+        int generatedBy,
+        CreateReportViewModel form,
+        CancellationToken cancellationToken = default)
+    {
+        return await UpsertReportAsync(
+            form.ReportID,
+            generatedBy,
+            form,
+            cancellationToken);
+    }
+
+    public async Task<Report> UpsertReportAsync(
+        int? reportId,
         int generatedBy,
         CreateReportViewModel form,
         CancellationToken cancellationToken = default)
@@ -72,16 +117,34 @@ public class FieldSubmissionService
                 form.EmergencyContactNumber),
             cancellationToken);
 
-        var report = new Report
+        Report report;
+        if (reportId is int resolvedReportId && resolvedReportId > 0)
         {
-            GeneratedBy = generatedBy,
-            Patient = intake.Patient,
-            DateGenerated = NormalizeDate(form.DateGenerated, DateTime.UtcNow),
-            ReportType = HouseholdIntakeHelper.NormalizeRequired(form.ReportType, nameof(form.ReportType)),
-            Content = HouseholdIntakeHelper.NormalizeRequired(form.Content, nameof(form.Content))
-        };
+            report = await _context.Reports.FirstOrDefaultAsync(
+                         item => item.ReportID == resolvedReportId,
+                         cancellationToken)
+                     ?? throw new ArgumentException("Report not found.", nameof(form.ReportID));
 
-        _context.Reports.Add(report);
+            report.GeneratedBy = generatedBy;
+            report.Patient = intake.Patient;
+            report.DateGenerated = NormalizeDate(form.DateGenerated, DateTime.UtcNow);
+            report.ReportType = HouseholdIntakeHelper.NormalizeRequired(form.ReportType, nameof(form.ReportType));
+            report.Content = HouseholdIntakeHelper.NormalizeRequired(form.Content, nameof(form.Content));
+        }
+        else
+        {
+            report = new Report
+            {
+                GeneratedBy = generatedBy,
+                Patient = intake.Patient,
+                DateGenerated = NormalizeDate(form.DateGenerated, DateTime.UtcNow),
+                ReportType = HouseholdIntakeHelper.NormalizeRequired(form.ReportType, nameof(form.ReportType)),
+                Content = HouseholdIntakeHelper.NormalizeRequired(form.Content, nameof(form.Content))
+            };
+
+            _context.Reports.Add(report);
+        }
+
         await _context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 

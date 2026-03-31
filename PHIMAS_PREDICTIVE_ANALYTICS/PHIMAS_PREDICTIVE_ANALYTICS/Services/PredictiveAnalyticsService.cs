@@ -16,23 +16,59 @@ public class PredictiveAnalyticsService
 
     public async Task RecalculateHouseholdRisksAsync()
     {
-        var households = await _context.Households
-            .Include(household => household.Members)
-            .ToListAsync();
-        var recentRecords = await _context.HealthRecords
-            .Where(record => record.DateRecorded >= DateTime.UtcNow.AddDays(-45))
-            .Include(record => record.Patient)
-            .ToListAsync();
+        var households = await _context.Households.ToListAsync();
+        if (households.Count == 0)
+        {
+            return;
+        }
+
+        var since = DateTime.UtcNow.AddDays(-45);
+        var memberCounts = await _context.HouseholdMembers
+            .AsNoTracking()
+            .GroupBy(member => member.HouseholdID)
+            .Select(group => new
+            {
+                HouseholdID = group.Key,
+                Count = group.Count()
+            })
+            .ToDictionaryAsync(item => item.HouseholdID, item => item.Count);
+
+        var recentRecordStats = await _context.HealthRecords
+            .AsNoTracking()
+            .Where(record => record.DateRecorded >= since && record.PatientID != null)
+            .Join(
+                _context.HouseholdMembers.AsNoTracking(),
+                record => record.PatientID!.Value,
+                patient => patient.MemberID,
+                (record, patient) => new
+                {
+                    patient.HouseholdID,
+                    record.Status,
+                    record.Disease
+                })
+            .GroupBy(item => item.HouseholdID)
+            .Select(group => new
+            {
+                HouseholdID = group.Key,
+                ActiveCount = group.Sum(item => item.Status != "Done" ? 1 : 0),
+                WeightedDiseaseRisk = group.Sum(item =>
+                    EF.Functions.Like(item.Disease, "%dengue%") ? 25 :
+                    EF.Functions.Like(item.Disease, "%lept%") ? 20 :
+                    EF.Functions.Like(item.Disease, "%influenza%") ? 12 :
+                    8)
+            })
+            .ToDictionaryAsync(item => item.HouseholdID);
 
         foreach (var household in households)
         {
-            var householdRecords = recentRecords
-                .Where(record => record.Patient != null && record.Patient.HouseholdID == household.HouseholdID)
-                .ToList();
-            var activeCount = householdRecords.Count(record => !string.Equals(record.Status, "Done", StringComparison.OrdinalIgnoreCase));
-            var weightedDiseaseRisk = householdRecords.Sum(record => GetDiseaseWeight(record.Disease));
-            var sizeFactor = household.NumberOfMembers * 2;
-            household.RiskScore = Math.Min(100, activeCount * 12 + weightedDiseaseRisk + sizeFactor);
+            var sizeFactor = (memberCounts.TryGetValue(household.HouseholdID, out var memberCount) ? memberCount : 0) * 2;
+            if (!recentRecordStats.TryGetValue(household.HouseholdID, out var stats))
+            {
+                household.RiskScore = Math.Min(100, sizeFactor);
+                continue;
+            }
+
+            household.RiskScore = Math.Min(100, (stats.ActiveCount * 12) + stats.WeightedDiseaseRisk + sizeFactor);
         }
 
         await _context.SaveChangesAsync();
@@ -218,26 +254,6 @@ public class PredictiveAnalyticsService
             .ThenByDescending(item => NormalizeConfidence(item.ConfidenceScore))
             .ThenByDescending(item => item.DateGenerated)
             .First();
-    }
-
-    private static int GetDiseaseWeight(string disease)
-    {
-        if (disease.Contains("dengue", StringComparison.OrdinalIgnoreCase))
-        {
-            return 25;
-        }
-
-        if (disease.Contains("lept", StringComparison.OrdinalIgnoreCase))
-        {
-            return 20;
-        }
-
-        if (disease.Contains("influenza", StringComparison.OrdinalIgnoreCase))
-        {
-            return 12;
-        }
-
-        return 8;
     }
 
     private static string ExtractArea(string? address)

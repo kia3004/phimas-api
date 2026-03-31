@@ -118,13 +118,13 @@
                 {
                     <div class="stack-item">
                         <h4>@report.ReportType</h4>
-                        <p>@report.Content</p>
+                        <p>@report.DisplayContent</p>
                         <small class="text-secondary">
                             @report.DisplayPatientName -
                             @report.DisplayAddress -
                             Emergency: @(string.IsNullOrWhiteSpace(report.DisplayEmergencyContactName) ? "Not set" : report.DisplayEmergencyContactName)@(string.IsNullOrWhiteSpace(report.DisplayEmergencyContactNumber) ? string.Empty : $" ({report.DisplayEmergencyContactNumber})")
                         </small>
-                        <small class="text-secondary">@report.DateGenerated:g</small>
+                        <small class="text-secondary">@report.DateGenerated.ToString("g")</small>
                     </div>
                 }
             }

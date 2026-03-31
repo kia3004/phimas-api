@@ -15,7 +15,7 @@ public class Household
     [StringLength(200)]
     public string Address { get; set; } = string.Empty;
 
-    public float? RiskScore { get; set; }
+    public float? RiskScore { get; set; } = 0f;
 
     public List<HouseholdMember> Members { get; set; } = [];
 

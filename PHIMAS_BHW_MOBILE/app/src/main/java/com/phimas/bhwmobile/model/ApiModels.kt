@@ -127,6 +127,7 @@ data class LoginRequest(
 )
 
 data class UpdateTaskStatusRequest(
+    @SerializedName("userId") val userId: Int,
     @SerializedName("taskId") val taskId: Int,
     @SerializedName("id") val id: Int = 0,
     @SerializedName("status") val status: String,

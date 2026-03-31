@@ -210,11 +210,22 @@ public class BHWController : AppControllerBase
         var currentUser = await GetCurrentUserAsync();
         if (currentUser != null)
         {
+            var normalizedEmail = updated.Email.Trim().ToLowerInvariant();
+            var emailInUse = await Context.Users.AnyAsync(user =>
+                user.UserID != currentUser.UserID &&
+                user.Email == normalizedEmail);
+            if (emailInUse)
+            {
+                TempData["Error"] = "Email already exists.";
+                return RedirectToAction(nameof(Account));
+            }
+
             currentUser.FullName = updated.FullName;
-            currentUser.Email = updated.Email;
+            currentUser.Email = normalizedEmail;
             currentUser.ContactNumber = updated.ContactNumber;
             currentUser.AssignedArea = updated.AssignedArea;
             await Context.SaveChangesAsync();
+            TempData["Message"] = "Profile updated successfully.";
         }
 
         return RedirectToAction(nameof(Account));
@@ -224,12 +235,26 @@ public class BHWController : AppControllerBase
     public async Task<IActionResult> UpdatePassword(string currentPassword, string newPassword)
     {
         var currentUser = await GetCurrentUserAsync();
-        if (currentUser != null && PasswordHelper.VerifyPassword(currentPassword, currentUser.Password))
+        if (currentUser == null)
         {
-            currentUser.Password = PasswordHelper.HashPassword(newPassword);
-            await Context.SaveChangesAsync();
+            return RedirectToAction(nameof(Account));
         }
 
+        if (string.IsNullOrWhiteSpace(newPassword))
+        {
+            TempData["Error"] = "New password is required.";
+            return RedirectToAction(nameof(Account));
+        }
+
+        if (!PasswordHelper.VerifyPassword(currentPassword, currentUser.Password))
+        {
+            TempData["Error"] = "Current password is incorrect.";
+            return RedirectToAction(nameof(Account));
+        }
+
+        currentUser.Password = PasswordHelper.HashPassword(newPassword);
+        await Context.SaveChangesAsync();
+        TempData["Message"] = "Password updated successfully.";
         return RedirectToAction(nameof(Account));
     }
 
@@ -252,6 +277,7 @@ public class BHWController : AppControllerBase
 
         currentUser.ProfilePicture = $"/images/profiles/{fileName}";
         await Context.SaveChangesAsync();
+        TempData["Message"] = "Profile picture uploaded successfully.";
 
         return RedirectToAction(nameof(Account));
     }

@@ -10,40 +10,174 @@
             <input class="form-control" type="text" name="search" value="@Model.Search" placeholder="Search patient, disease, household, emergency contact, or status" />
             <button class="btn btn-outline-success" type="submit">Search</button>
         </form>
+        @if (TempData["Message"] is string message)
+        {
+            <span class="text-success">@message</span>
+        }
+        @if (TempData["Error"] is string error)
+        {
+            <span class="text-danger">@error</span>
+        }
     </div>
 
-    <div class="table-shell">
-        <h3 class="section-title">Recorded Cases</h3>
-        <p class="section-subtitle">Health records are read-only for admin. Patient and emergency contact details are derived from linked household members.</p>
-        <div class="stack-list">
-            @if (!Model.HealthRecords.Any())
-            {
-                <div class="stack-item">
-                    <p class="mb-0 text-secondary">No health records found.</p>
+    <section class="page-grid-2">
+        <div class="form-shell">
+            <h3 class="section-title">Add Health Record</h3>
+            <p class="section-subtitle">Admin can correct field submissions or add records directly when data has to be backfilled.</p>
+            <form asp-action="SaveHealthRecord" method="post" class="form-grid" autocomplete="off">
+                <input asp-for="Form.RecordID" type="hidden" />
+                <div asp-validation-summary="ModelOnly" class="text-danger full-width"></div>
+                <div>
+                    <label asp-for="Form.BHWID" class="form-label">Assigned BHW</label>
+                    <select asp-for="Form.BHWID" class="form-select" asp-items="@(new SelectList(Model.BHWs, "UserID", "FullName"))">
+                        <option value="">Select BHW</option>
+                    </select>
+                    <span asp-validation-for="Form.BHWID" class="text-danger"></span>
                 </div>
-            }
-            else
-            {
-                @foreach (var record in Model.HealthRecords)
+                <div>
+                    <label asp-for="Form.DateRecorded" class="form-label">Date</label>
+                    <input asp-for="Form.DateRecorded" type="date" class="form-control" />
+                    <span asp-validation-for="Form.DateRecorded" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Form.PatientName" class="form-label">Patient Name</label>
+                    <input asp-for="Form.PatientName" class="form-control" placeholder="Enter patient name" />
+                    <span asp-validation-for="Form.PatientName" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Form.ContactNumber" class="form-label">Contact Number</label>
+                    <input asp-for="Form.ContactNumber" class="form-control" placeholder="09XXXXXXXXX" />
+                    <span asp-validation-for="Form.ContactNumber" class="text-danger"></span>
+                </div>
+                <div class="full-width">
+                    <label asp-for="Form.Address" class="form-label">Household Address</label>
+                    <textarea asp-for="Form.Address" rows="3" class="form-control"></textarea>
+                    <span asp-validation-for="Form.Address" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Form.EmergencyContactName" class="form-label">Emergency Contact Name</label>
+                    <input asp-for="Form.EmergencyContactName" class="form-control" />
+                    <span asp-validation-for="Form.EmergencyContactName" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Form.EmergencyContactNumber" class="form-label">Emergency Contact Number</label>
+                    <input asp-for="Form.EmergencyContactNumber" class="form-control" />
+                    <span asp-validation-for="Form.EmergencyContactNumber" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Form.Disease" class="form-label">Disease</label>
+                    <input asp-for="Form.Disease" class="form-control" />
+                    <span asp-validation-for="Form.Disease" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Form.Status" class="form-label">Status</label>
+                    <select asp-for="Form.Status" class="form-select">
+                        <option>Submitted</option>
+                        <option>Active</option>
+                        <option>Monitoring</option>
+                        <option>Escalated</option>
+                        <option>Recovered</option>
+                        <option>Resolved</option>
+                    </select>
+                    <span asp-validation-for="Form.Status" class="text-danger"></span>
+                </div>
+                <div class="full-width">
+                    <label asp-for="Form.Symptoms" class="form-label">Symptoms</label>
+                    <textarea asp-for="Form.Symptoms" rows="5" class="form-control"></textarea>
+                    <span asp-validation-for="Form.Symptoms" class="text-danger"></span>
+                </div>
+                <div class="full-width">
+                    <button class="btn btn-success" type="submit">Save Health Record</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-shell">
+            <h3 class="section-title">Recorded Cases</h3>
+            <p class="section-subtitle">Admin can update or delete records and the changes are written directly to the shared database.</p>
+            <div class="stack-list">
+                @if (!Model.HealthRecords.Any())
                 {
                     <div class="stack-item">
-                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <h4>@record.Disease</h4>
-                            <span class="severity-pill @(record.Status.Contains("Escalated") ? "high" : "info")">@record.Status</span>
-                        </div>
-                        <p>@record.Symptoms</p>
-                        <small class="text-secondary">
-                            Patient: @record.DisplayPatientName |
-                            Household: @record.DisplayAddress |
-                            Emergency: @(string.IsNullOrWhiteSpace(record.DisplayEmergencyContactName) ? "Not set" : record.DisplayEmergencyContactName)@(string.IsNullOrWhiteSpace(record.DisplayEmergencyContactNumber) ? string.Empty : $" ({record.DisplayEmergencyContactNumber})") |
-                            BHW: @(record.BHW?.FullName ?? "Unassigned")
-                        </small>
-                        <div class="mt-1">
-                            <small class="text-secondary">@record.DateRecorded:g</small>
-                        </div>
+                        <p class="mb-0 text-secondary">No health records found.</p>
                     </div>
                 }
-            }
+                else
+                {
+                    @foreach (var record in Model.HealthRecords)
+                    {
+                        <div class="stack-item">
+                            <form asp-action="SaveHealthRecord" method="post" class="form-grid" autocomplete="off">
+                                <input type="hidden" name="Form.RecordID" value="@record.RecordID" />
+                                <div>
+                                    <label class="form-label">Assigned BHW</label>
+                                    <select class="form-select" name="Form.BHWID">
+                                        <option value="">Select BHW</option>
+                                        @foreach (var bhw in Model.BHWs)
+                                        {
+                                            <option value="@bhw.UserID" selected="@(record.BHWID == bhw.UserID ? "selected" : null)">@bhw.FullName</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">Date</label>
+                                    <input class="form-control" type="date" name="Form.DateRecorded" value="@record.DateRecorded.ToString("yyyy-MM-dd")" />
+                                </div>
+                                <div>
+                                    <label class="form-label">Patient Name</label>
+                                    <input class="form-control" name="Form.PatientName" value="@record.DisplayPatientName" />
+                                </div>
+                                <div>
+                                    <label class="form-label">Contact Number</label>
+                                    <input class="form-control" name="Form.ContactNumber" value="@record.Patient?.ContactNumber" />
+                                </div>
+                                <div class="full-width">
+                                    <label class="form-label">Household Address</label>
+                                    <textarea class="form-control" name="Form.Address" rows="3">@record.DisplayAddress</textarea>
+                                </div>
+                                <div>
+                                    <label class="form-label">Emergency Contact Name</label>
+                                    <input class="form-control" name="Form.EmergencyContactName" value="@record.DisplayEmergencyContactName" />
+                                </div>
+                                <div>
+                                    <label class="form-label">Emergency Contact Number</label>
+                                    <input class="form-control" name="Form.EmergencyContactNumber" value="@record.DisplayEmergencyContactNumber" />
+                                </div>
+                                <div>
+                                    <label class="form-label">Disease</label>
+                                    <input class="form-control" name="Form.Disease" value="@record.Disease" />
+                                </div>
+                                <div>
+                                    <label class="form-label">Status</label>
+                                    <select class="form-select" name="Form.Status">
+                                        <option value="Submitted" selected="@(record.Status == "Submitted" ? "selected" : null)">Submitted</option>
+                                        <option value="Active" selected="@(record.Status == "Active" ? "selected" : null)">Active</option>
+                                        <option value="Monitoring" selected="@(record.Status == "Monitoring" ? "selected" : null)">Monitoring</option>
+                                        <option value="Escalated" selected="@(record.Status == "Escalated" ? "selected" : null)">Escalated</option>
+                                        <option value="Recovered" selected="@(record.Status == "Recovered" ? "selected" : null)">Recovered</option>
+                                        <option value="Resolved" selected="@(record.Status == "Resolved" ? "selected" : null)">Resolved</option>
+                                    </select>
+                                </div>
+                                <div class="full-width">
+                                    <label class="form-label">Symptoms</label>
+                                    <textarea class="form-control" name="Form.Symptoms" rows="4">@record.DisplaySymptoms</textarea>
+                                </div>
+                                <div class="full-width d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                    <small class="text-secondary">Last recorded @record.DateRecorded.ToString("g")</small>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-outline-success" type="submit">Update</button>
+                                        <button class="btn btn-outline-danger" type="submit" formaction="@Url.Action("DeleteHealthRecord", "Admin", new { id = record.RecordID })" formmethod="post">Delete</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    }
+                }
+            </div>
         </div>
-    </div>
+    </section>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

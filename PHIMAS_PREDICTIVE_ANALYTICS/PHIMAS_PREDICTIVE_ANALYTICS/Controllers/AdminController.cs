@@ -14,14 +14,17 @@ public class AdminController : AppControllerBase
 {
     private readonly PredictiveAnalyticsService _predictiveAnalyticsService;
     private readonly AIAssistantService _aiAssistantService;
+    private readonly FieldSubmissionService _fieldSubmissionService;
 
     public AdminController(
         AppDbContext context,
         PredictiveAnalyticsService predictiveAnalyticsService,
-        AIAssistantService aiAssistantService) : base(context)
+        AIAssistantService aiAssistantService,
+        FieldSubmissionService fieldSubmissionService) : base(context)
     {
         _predictiveAnalyticsService = predictiveAnalyticsService;
         _aiAssistantService = aiAssistantService;
+        _fieldSubmissionService = fieldSubmissionService;
     }
 
     public async Task<IActionResult> Dashboard()
@@ -85,6 +88,13 @@ public class AdminController : AppControllerBase
     {
         var form = model.Form;
         form.Role = form.Role.Trim().ToUpperInvariant();
+        form.Email = form.Email.Trim().ToLowerInvariant();
+
+        if (form.Role is not ("ADMIN" or "CHO" or "BHW"))
+        {
+            TempData["Error"] = "Invalid role selected.";
+            return RedirectToAction(nameof(Admin));
+        }
 
         if (form.UserID == 0)
         {
@@ -112,6 +122,15 @@ public class AdminController : AppControllerBase
                 return RedirectToAction(nameof(Admin));
             }
 
+            var emailInUse = await Context.Users.AnyAsync(user =>
+                user.UserID != form.UserID &&
+                user.Email == form.Email);
+            if (emailInUse)
+            {
+                TempData["Error"] = "Email already exists.";
+                return RedirectToAction(nameof(Admin));
+            }
+
             existingUser.FullName = form.FullName;
             existingUser.Role = form.Role;
             existingUser.Email = form.Email;
@@ -133,10 +152,33 @@ public class AdminController : AppControllerBase
     public async Task<IActionResult> DeleteUser(int id)
     {
         var user = await Context.Users.FindAsync(id);
-        if (user != null)
+        if (user == null)
+        {
+            return RedirectToAction(nameof(Admin));
+        }
+
+        if (CurrentUserId == user.UserID)
+        {
+            TempData["Error"] = "You cannot delete the account that is currently signed in.";
+            return RedirectToAction(nameof(Admin));
+        }
+
+        var hasLinkedHealthRecords = await Context.HealthRecords.AnyAsync(record => record.BHWID == user.UserID);
+        var hasLinkedReports = await Context.Reports.AnyAsync(report => report.GeneratedBy == user.UserID);
+        if (hasLinkedHealthRecords || hasLinkedReports)
+        {
+            TempData["Error"] = "User cannot be deleted while linked health records or reports still exist.";
+            return RedirectToAction(nameof(Admin));
+        }
+
+        try
         {
             Context.Users.Remove(user);
             await Context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            TempData["Error"] = "User could not be deleted because it is still referenced by other records.";
         }
 
         return RedirectToAction(nameof(Admin));
@@ -145,94 +187,162 @@ public class AdminController : AppControllerBase
     public async Task<IActionResult> Households(string? search)
     {
         ViewData["Active"] = "Households";
-        var query = Context.Households
-            .Include(household => household.Members)
-            .AsQueryable();
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            query = query.Where(household =>
-                household.Address.Contains(search) ||
-                household.Members.Any(member =>
-                    member.FullName.Contains(search) ||
-                    member.ContactNumber.Contains(search)));
-        }
-
-        return View(new HouseholdsPageViewModel
-        {
-            Households = await query.OrderByDescending(household => household.RiskScore).ToListAsync(),
-            Search = search
-        });
+        return View(await BuildHouseholdsPageAsync(search));
     }
 
     [HttpPost]
-    public IActionResult SaveHousehold(HouseholdsPageViewModel model)
+    public async Task<IActionResult> SaveHousehold(HouseholdsPageViewModel model)
     {
-        TempData["Error"] = "Household creation and editing are restricted to BHW submissions.";
+        var form = model.Form;
+        if (string.IsNullOrWhiteSpace(form.Address) || string.IsNullOrWhiteSpace(form.HouseholdMember))
+        {
+            ModelState.AddModelError(string.Empty, "Household head and address are required.");
+            ViewData["Active"] = "Households";
+            return View("Households", await BuildHouseholdsPageAsync(null, form));
+        }
+
+        Household household;
+        if (form.HouseholdID == 0)
+        {
+            household = new Household();
+            Context.Households.Add(household);
+        }
+        else
+        {
+            household = await Context.Households
+                .FirstOrDefaultAsync(item => item.HouseholdID == form.HouseholdID)
+                ?? new Household();
+
+            if (household.HouseholdID == 0)
+            {
+                TempData["Error"] = "Household not found.";
+                return RedirectToAction(nameof(Households));
+            }
+        }
+
+        household.Address = form.Address.Trim();
+        household.RiskScore = form.RiskScore ?? 0f;
+        household.HouseholdMember = form.HouseholdMember.Trim();
+        household.MembersInput = form.MembersInput?.Trim() ?? string.Empty;
+
+        try
+        {
+            await Context.SaveChangesAsync();
+            await SyncHouseholdMembersAsync(household);
+            await Context.SaveChangesAsync();
+            TempData["Message"] = form.HouseholdID == 0
+                ? "Household created successfully."
+                : "Household updated successfully.";
+        }
+        catch (DbUpdateException)
+        {
+            TempData["Error"] = "Household could not be saved because it conflicts with existing patient data.";
+        }
+
         return RedirectToAction(nameof(Households));
     }
 
     [HttpPost]
-    public IActionResult DeleteHousehold(int id)
+    public async Task<IActionResult> DeleteHousehold(int id)
     {
-        TempData["Error"] = "Household deletion is disabled to preserve the household source of truth.";
+        var memberIds = await Context.HouseholdMembers
+            .Where(member => member.HouseholdID == id)
+            .Select(member => member.MemberID)
+            .ToListAsync();
+
+        if (memberIds.Count == 0)
+        {
+            var missingHousehold = await Context.Households.FindAsync(id);
+            if (missingHousehold != null)
+            {
+                Context.Households.Remove(missingHousehold);
+                await Context.SaveChangesAsync();
+                TempData["Message"] = "Household deleted successfully.";
+            }
+
+            return RedirectToAction(nameof(Households));
+        }
+
+        var hasLinkedRecords = await Context.HealthRecords.AnyAsync(record =>
+            record.PatientID.HasValue && memberIds.Contains(record.PatientID.Value));
+        var hasLinkedReports = await Context.Reports.AnyAsync(report =>
+            report.PatientID.HasValue && memberIds.Contains(report.PatientID.Value));
+
+        if (hasLinkedRecords || hasLinkedReports)
+        {
+            TempData["Error"] = "Household cannot be deleted while linked reports or health records still exist.";
+            return RedirectToAction(nameof(Households));
+        }
+
+        var household = await Context.Households.FindAsync(id);
+        if (household != null)
+        {
+            Context.Households.Remove(household);
+            await Context.SaveChangesAsync();
+            TempData["Message"] = "Household deleted successfully.";
+        }
+
         return RedirectToAction(nameof(Households));
     }
 
     public async Task<IActionResult> HealthRecords(string? search)
     {
         ViewData["Active"] = "HealthRecords";
-        var query = Context.HealthRecords
-            .Include(record => record.Patient)
-            .ThenInclude(patient => patient!.Household)
-            .ThenInclude(household => household!.Members)
-            .Include(record => record.BHW)
-            .AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            query = query.Where(record =>
-                (record.Patient != null && record.Patient.FullName.Contains(search)) ||
-                record.Disease.Contains(search) ||
-                record.Status.Contains(search) ||
-                (record.Patient != null &&
-                 record.Patient.Household != null && (
-                    record.Patient.Household.Address.Contains(search) ||
-                    record.Patient.Household.Members.Any(member =>
-                        member.IsEmergencyContact &&
-                        (member.FullName.Contains(search) ||
-                         member.ContactNumber.Contains(search))))));
-        }
-
-        var households = await Context.Households
-            .Include(household => household.Members)
-            .OrderBy(household => household.Address)
-            .ToListAsync();
-        var patients = BuildPatientDirectory(households);
-
-        return View(new HealthRecordsPageViewModel
-        {
-            HealthRecords = await query.OrderByDescending(record => record.DateRecorded).ToListAsync(),
-            Patients = patients,
-            BHWs = await Context.Users.Where(user => user.Role == "BHW").OrderBy(user => user.FullName).ToListAsync(),
-            Search = search,
-            Form = new CreateHealthRecordViewModel
-            {
-                DateRecorded = DateTime.Today
-            }
-        });
+        return View(await BuildHealthRecordsPageAsync(search));
     }
 
     [HttpPost]
-    public IActionResult SaveHealthRecord(HealthRecordsPageViewModel model)
+    public async Task<IActionResult> SaveHealthRecord(HealthRecordsPageViewModel model)
     {
-        TempData["Error"] = "Health records are read-only for admin. New entries must come from BHW submissions.";
+        if (!ModelState.IsValid)
+        {
+            ViewData["Active"] = "HealthRecords";
+            return View("HealthRecords", await BuildHealthRecordsPageAsync(null, model.Form));
+        }
+
+        if (model.Form.BHWID is not int bhwId ||
+            !await Context.Users.AnyAsync(user => user.UserID == bhwId && user.Role == "BHW"))
+        {
+            ModelState.AddModelError(string.Empty, "A valid BHW is required.");
+            ViewData["Active"] = "HealthRecords";
+            return View("HealthRecords", await BuildHealthRecordsPageAsync(null, model.Form));
+        }
+
+        try
+        {
+            await _fieldSubmissionService.UpsertHealthRecordAsync(model.Form.RecordID, bhwId, model.Form);
+            TempData["Message"] = model.Form.RecordID > 0
+                ? "Health record updated successfully."
+                : "Health record created successfully.";
+        }
+        catch (ArgumentException exception)
+        {
+            ModelState.AddModelError(string.Empty, exception.Message);
+            ViewData["Active"] = "HealthRecords";
+            return View("HealthRecords", await BuildHealthRecordsPageAsync(null, model.Form));
+        }
+        catch (DbUpdateException)
+        {
+            ModelState.AddModelError(string.Empty, "Health record could not be saved because of a conflicting patient or household reference.");
+            ViewData["Active"] = "HealthRecords";
+            return View("HealthRecords", await BuildHealthRecordsPageAsync(null, model.Form));
+        }
+
         return RedirectToAction(nameof(HealthRecords));
     }
 
     [HttpPost]
-    public IActionResult DeleteHealthRecord(int id)
+    public async Task<IActionResult> DeleteHealthRecord(int id)
     {
-        TempData["Error"] = "Health record deletion is disabled to preserve linked household data.";
+        var record = await Context.HealthRecords.FindAsync(id);
+        if (record != null)
+        {
+            Context.HealthRecords.Remove(record);
+            await Context.SaveChangesAsync();
+            await _predictiveAnalyticsService.RecalculateHouseholdRisksAsync();
+            TempData["Message"] = "Health record deleted successfully.";
+        }
+
         return RedirectToAction(nameof(HealthRecords));
     }
 
@@ -291,52 +401,46 @@ public class AdminController : AppControllerBase
     public async Task<IActionResult> Reports(string? search)
     {
         ViewData["Active"] = "Reports";
-        await _predictiveAnalyticsService.RecalculateHouseholdRisksAsync();
-
-        var reportsQuery = Context.Reports
-            .Include(report => report.Patient)
-            .ThenInclude(patient => patient!.Household)
-            .ThenInclude(household => household!.Members)
-            .AsQueryable();
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            reportsQuery = reportsQuery.Where(report =>
-                report.ReportType.Contains(search) ||
-                report.Content.Contains(search) ||
-                (report.Patient != null && report.Patient.FullName.Contains(search)) ||
-                (report.Patient != null &&
-                 report.Patient.Household != null &&
-                 report.Patient.Household.Address.Contains(search)));
-        }
-
-        var households = await Context.Households
-            .Include(household => household.Members)
-            .OrderBy(household => household.Address)
-            .ToListAsync();
-        var patients = BuildPatientDirectory(households);
-
-        return View(new ReportsPageViewModel
-        {
-            Reports = await reportsQuery.OrderByDescending(report => report.DateGenerated).ToListAsync(),
-            Users = await Context.Users.OrderBy(user => user.FullName).ToListAsync(),
-            Patients = patients,
-            Insights = await _aiAssistantService.BuildInsightsAsync(),
-            Search = search,
-            TotalScope = await Context.Households.CountAsync(),
-            DataPoints = await Context.HealthRecords.CountAsync(),
-            RiskIndex = await BuildRiskIndexAsync(),
-            Form = new CreateReportViewModel
-            {
-                DateGenerated = DateTime.Today,
-                ReportType = "Consultation Log"
-            }
-        });
+        return View(await BuildReportsPageAsync(search));
     }
 
     [HttpPost]
-    public IActionResult SaveReport(ReportsPageViewModel model)
+    public async Task<IActionResult> SaveReport(ReportsPageViewModel model)
     {
-        TempData["Error"] = "Reports are read-only for admin. New field-linked reports must come from BHW submissions.";
+        if (!ModelState.IsValid)
+        {
+            ViewData["Active"] = "Reports";
+            return View("Reports", await BuildReportsPageAsync(null, model.Form));
+        }
+
+        if (model.Form.GeneratedBy is not int generatedBy ||
+            !await Context.Users.AnyAsync(user => user.UserID == generatedBy))
+        {
+            ModelState.AddModelError(string.Empty, "A valid report owner is required.");
+            ViewData["Active"] = "Reports";
+            return View("Reports", await BuildReportsPageAsync(null, model.Form));
+        }
+
+        try
+        {
+            await _fieldSubmissionService.UpsertReportAsync(model.Form.ReportID, generatedBy, model.Form);
+            TempData["Message"] = model.Form.ReportID > 0
+                ? "Report updated successfully."
+                : "Report created successfully.";
+        }
+        catch (ArgumentException exception)
+        {
+            ModelState.AddModelError(string.Empty, exception.Message);
+            ViewData["Active"] = "Reports";
+            return View("Reports", await BuildReportsPageAsync(null, model.Form));
+        }
+        catch (DbUpdateException)
+        {
+            ModelState.AddModelError(string.Empty, "Report could not be saved because of a conflicting patient or user reference.");
+            ViewData["Active"] = "Reports";
+            return View("Reports", await BuildReportsPageAsync(null, model.Form));
+        }
+
         return RedirectToAction(nameof(Reports));
     }
 
@@ -348,9 +452,16 @@ public class AdminController : AppControllerBase
     }
 
     [HttpPost]
-    public IActionResult DeleteReport(int id)
+    public async Task<IActionResult> DeleteReport(int id)
     {
-        TempData["Error"] = "Report deletion is disabled to preserve linked household data.";
+        var report = await Context.Reports.FindAsync(id);
+        if (report != null)
+        {
+            Context.Reports.Remove(report);
+            await Context.SaveChangesAsync();
+            TempData["Message"] = "Report deleted successfully.";
+        }
+
         return RedirectToAction(nameof(Reports));
     }
 
@@ -446,8 +557,18 @@ public class AdminController : AppControllerBase
         var currentUser = await GetCurrentUserAsync();
         if (currentUser != null)
         {
+            var normalizedEmail = updated.Email.Trim().ToLowerInvariant();
+            var emailInUse = await Context.Users.AnyAsync(user =>
+                user.UserID != currentUser.UserID &&
+                user.Email == normalizedEmail);
+            if (emailInUse)
+            {
+                TempData["Error"] = "Email already exists.";
+                return RedirectToAction(nameof(AccountSet));
+            }
+
             currentUser.FullName = updated.FullName;
-            currentUser.Email = updated.Email;
+            currentUser.Email = normalizedEmail;
             currentUser.ContactNumber = updated.ContactNumber;
             currentUser.AssignedArea = updated.AssignedArea;
 
@@ -462,9 +583,137 @@ public class AdminController : AppControllerBase
         return RedirectToAction(nameof(AccountSet));
     }
 
+    private async Task<HouseholdsPageViewModel> BuildHouseholdsPageAsync(string? search, Household? form = null)
+    {
+        var query = Context.Households
+            .Include(household => household.Members)
+            .AsQueryable();
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(household =>
+                household.Address.Contains(search) ||
+                household.Members.Any(member =>
+                    member.FullName.Contains(search) ||
+                    member.ContactNumber.Contains(search)));
+        }
+
+        return new HouseholdsPageViewModel
+        {
+            Households = await query
+                .OrderByDescending(household => household.RiskScore ?? 0)
+                .ThenBy(household => household.Address)
+                .ToListAsync(),
+            Search = search,
+            Form = form ?? new Household()
+        };
+    }
+
+    private async Task<HealthRecordsPageViewModel> BuildHealthRecordsPageAsync(
+        string? search,
+        CreateHealthRecordViewModel? form = null)
+    {
+        var query = Context.HealthRecords
+            .Include(record => record.Patient)
+            .ThenInclude(patient => patient!.Household)
+            .ThenInclude(household => household!.Members)
+            .Include(record => record.BHW)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(record =>
+                (record.Patient != null && record.Patient.FullName.Contains(search)) ||
+                record.Disease.Contains(search) ||
+                record.Status.Contains(search) ||
+                (record.Patient != null &&
+                 record.Patient.Household != null && (
+                    record.Patient.Household.Address.Contains(search) ||
+                    record.Patient.Household.Members.Any(member =>
+                        member.IsEmergencyContact &&
+                        (member.FullName.Contains(search) ||
+                         member.ContactNumber.Contains(search))))));
+        }
+
+        var households = await Context.Households
+            .Include(household => household.Members)
+            .OrderBy(household => household.Address)
+            .ToListAsync();
+        var bhws = await Context.Users
+            .Where(user => user.Role == "BHW")
+            .OrderBy(user => user.FullName)
+            .ToListAsync();
+        var resolvedForm = form ?? new CreateHealthRecordViewModel
+        {
+            DateRecorded = DateTime.Today,
+            Status = "Submitted",
+            BHWID = bhws.FirstOrDefault()?.UserID
+        };
+
+        return new HealthRecordsPageViewModel
+        {
+            HealthRecords = await query.OrderByDescending(record => record.DateRecorded).ToListAsync(),
+            Patients = BuildPatientDirectory(households),
+            BHWs = bhws,
+            Search = search,
+            Form = resolvedForm
+        };
+    }
+
+    private async Task<ReportsPageViewModel> BuildReportsPageAsync(
+        string? search,
+        CreateReportViewModel? form = null)
+    {
+        await _predictiveAnalyticsService.RecalculateHouseholdRisksAsync();
+
+        var reportsQuery = Context.Reports
+            .Include(report => report.Patient)
+            .ThenInclude(patient => patient!.Household)
+            .ThenInclude(household => household!.Members)
+            .Include(report => report.GeneratedByUser)
+            .AsQueryable();
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            reportsQuery = reportsQuery.Where(report =>
+                report.ReportType.Contains(search) ||
+                report.Content.Contains(search) ||
+                (report.Patient != null && report.Patient.FullName.Contains(search)) ||
+                (report.Patient != null &&
+                 report.Patient.Household != null &&
+                 report.Patient.Household.Address.Contains(search)));
+        }
+
+        var households = await Context.Households
+            .Include(household => household.Members)
+            .OrderBy(household => household.Address)
+            .ToListAsync();
+        var users = await Context.Users.OrderBy(user => user.FullName).ToListAsync();
+        var resolvedForm = form ?? new CreateReportViewModel
+        {
+            DateGenerated = DateTime.Today,
+            ReportType = "Consultation Log",
+            GeneratedBy = CurrentUserId ?? users.FirstOrDefault()?.UserID
+        };
+
+        return new ReportsPageViewModel
+        {
+            Reports = await reportsQuery.OrderByDescending(report => report.DateGenerated).ToListAsync(),
+            Users = users,
+            Patients = BuildPatientDirectory(households),
+            Insights = await _aiAssistantService.BuildInsightsAsync(),
+            Search = search,
+            TotalScope = await Context.Households.CountAsync(),
+            DataPoints = await Context.HealthRecords.CountAsync(),
+            RiskIndex = await BuildRiskIndexAsync(),
+            Form = resolvedForm
+        };
+    }
+
     private async Task<string> BuildRiskIndexAsync()
     {
-        var averageRisk = await Context.Households.AverageAsync(household => household.RiskScore ?? 0);
+        var averageRisk = await Context.Households
+            .Select(household => (double?)(household.RiskScore ?? 0))
+            .AverageAsync() ?? 0d;
+
         return averageRisk switch
         {
             >= 70 => $"High ({averageRisk:0.0})",

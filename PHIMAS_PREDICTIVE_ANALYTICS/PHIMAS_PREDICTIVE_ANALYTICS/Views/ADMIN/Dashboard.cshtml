@@ -43,7 +43,7 @@
                                 <tr>
                                     <td>
                                         <div class="fw-semibold">@task.Title</div>
-                                        <small class="text-secondary">@task.TaskDate:g</small>
+                                        <small class="text-secondary">@task.TaskDate.ToString("g")</small>
                                     </td>
                                     <td>@task.HouseholdName</td>
                                     <td>@task.BHWName</td>
@@ -69,8 +69,8 @@
                     {
                         <div class="stack-item">
                             <h4>@report.ReportType</h4>
-                            <p>@report.Content</p>
-                            <small class="text-secondary">@report.DateGenerated:g</small>
+                            <p>@report.DisplayContent</p>
+                            <small class="text-secondary">@report.DateGenerated.ToString("g")</small>
                         </div>
                     }
                 </div>

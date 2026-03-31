@@ -19,7 +19,7 @@
                     <div>
                         <h4>@task.Title</h4>
                         <p>@task.Description</p>
-                        <small class="text-secondary">@task.HouseholdName • @task.HouseholdAddress</small>
+                        <small class="text-secondary">@task.HouseholdName - @task.HouseholdAddress</small>
                     </div>
                     <div class="d-flex flex-column align-items-end gap-2">
                         <span class="status-pill @(task.Priority.ToLower())">@task.Priority</span>
@@ -27,7 +27,7 @@
                     </div>
                 </div>
                 <div class="d-flex justify-content-between align-items-center mt-3">
-                    <small class="text-secondary">@task.TaskDate:g</small>
+                    <small class="text-secondary">@task.TaskDate.ToString("g")</small>
                     <form asp-action="UpdateTaskStatus" method="post" class="d-flex gap-2">
                         <input type="hidden" name="taskId" value="@task.TaskID" />
                         <select class="form-select" name="status">

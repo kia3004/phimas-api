@@ -148,8 +148,12 @@ class MainViewModel(
     }
 
     fun updateTaskStatus(taskId: Int, status: String) {
-        runMutation {
-            repository.updateTaskStatus(taskId = taskId, status = status).message
+        runMutation { session ->
+            repository.updateTaskStatus(
+                userId = session.userId,
+                taskId = taskId,
+                status = status,
+            ).message
         }
     }
 

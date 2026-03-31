@@ -40,6 +40,7 @@ public static class HouseholdIntakeHelper
             household = new Household
             {
                 Address = address,
+                RiskScore = 0f,
                 Members = []
             };
 
@@ -48,6 +49,7 @@ public static class HouseholdIntakeHelper
         else
         {
             household.Address = address;
+            household.RiskScore ??= 0f;
             household.Members ??= [];
         }
 

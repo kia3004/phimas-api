@@ -47,7 +47,7 @@
                     {
                         <div class="stack-item">
                             <h4>@report.ReportType</h4>
-                            <p>@report.Content</p>
+                            <p>@report.DisplayContent</p>
                             @if (report.Patient != null || report.Household != null)
                             {
                                 <small class="text-secondary">
@@ -57,7 +57,7 @@
                                 </small>
                             }
                             <div class="mt-1">
-                                <small class="text-secondary">@report.DateGenerated:g</small>
+                                <small class="text-secondary">@report.DateGenerated.ToString("g")</small>
                             </div>
                         </div>
                     }

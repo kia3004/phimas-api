@@ -227,6 +227,10 @@ public abstract class InlineHouseholdIntakeViewModel : IValidatableObject
 
 public class CreateHealthRecordViewModel : InlineHouseholdIntakeViewModel
 {
+    public int? RecordID { get; set; }
+
+    public int? BHWID { get; set; }
+
     [Required]
     public DateTime DateRecorded { get; set; } = DateTime.Today;
 
@@ -245,6 +249,10 @@ public class CreateHealthRecordViewModel : InlineHouseholdIntakeViewModel
 
 public class CreateReportViewModel : InlineHouseholdIntakeViewModel
 {
+    public int? ReportID { get; set; }
+
+    public int? GeneratedBy { get; set; }
+
     [Required]
     public DateTime DateGenerated { get; set; } = DateTime.Today;
 

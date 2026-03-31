@@ -67,8 +67,8 @@ public class BHWApiController : ControllerBase
     [HttpGet("dashboard")]
     public async Task<IActionResult> Dashboard([FromQuery] int userId)
     {
-        var user = await _context.Users.FindAsync(userId);
-        if (user == null || user.Role != "BHW")
+        var user = await GetBhwUserAsync(userId);
+        if (user == null)
         {
             return NotFound(new { success = false, message = "BHW not found." });
         }
@@ -94,9 +94,15 @@ public class BHWApiController : ControllerBase
     [HttpGet("tasks")]
     public async Task<IActionResult> GetTasks([FromQuery] int userId)
     {
+        var user = await GetBhwUserAsync(userId);
+        if (user == null)
+        {
+            return NotFound(new { success = false, message = "BHW not found." });
+        }
+
         var tasks = await _context.TaskAssignments
             .Include(task => task.Household)
-            .Where(task => task.BHWID == userId)
+            .Where(task => task.BHWID == user.UserID)
             .OrderBy(task => task.TaskDate)
             .ToListAsync();
 
@@ -124,11 +130,19 @@ public class BHWApiController : ControllerBase
             return BadRequest(new { success = false, message = "Invalid request." });
         }
 
+        var user = await ResolveUserAsync(request.UserID, request.Username);
+        if (user == null)
+        {
+            return NotFound(new { success = false, message = "BHW not found." });
+        }
+
         var taskId = request.TaskID > 0 ? request.TaskID : request.Id;
-        var task = await _context.TaskAssignments.FindAsync(taskId);
+        var task = await _context.TaskAssignments.FirstOrDefaultAsync(item =>
+            item.TaskID == taskId &&
+            item.BHWID == user.UserID);
         if (task == null)
         {
-            return NotFound(new { success = false, message = "Task not found." });
+            return NotFound(new { success = false, message = "Task not found for this BHW." });
         }
 
         task.Status = request.Status.Trim();
@@ -139,22 +153,40 @@ public class BHWApiController : ControllerBase
     [HttpGet("patients")]
     public async Task<IActionResult> GetPatients([FromQuery] int userId)
     {
-        var households = await GetAccessibleHouseholdsAsync(userId);
+        var user = await GetBhwUserAsync(userId);
+        if (user == null)
+        {
+            return NotFound(new { success = false, message = "BHW not found." });
+        }
+
+        var households = await GetAccessibleHouseholdsAsync(user);
         return Ok(BuildPatientDirectory(households));
     }
 
     [HttpGet("households")]
     public async Task<IActionResult> GetHouseholds([FromQuery] int userId)
     {
-        var households = await GetAccessibleHouseholdsAsync(userId);
+        var user = await GetBhwUserAsync(userId);
+        if (user == null)
+        {
+            return NotFound(new { success = false, message = "BHW not found." });
+        }
+
+        var households = await GetAccessibleHouseholdsAsync(user);
         return Ok(households.Select(MapHousehold));
     }
 
     [HttpGet("healthrecords")]
     public async Task<IActionResult> GetHealthRecords([FromQuery] int userId)
     {
+        var user = await GetBhwUserAsync(userId);
+        if (user == null)
+        {
+            return NotFound(new { success = false, message = "BHW not found." });
+        }
+
         var records = await _context.HealthRecords
-            .Where(record => record.BHWID == userId)
+            .Where(record => record.BHWID == user.UserID)
             .Include(record => record.Patient)
             .ThenInclude(patient => patient!.Household)
             .ThenInclude(household => household!.Members)
@@ -210,11 +242,17 @@ public class BHWApiController : ControllerBase
     [HttpGet("reports/recent")]
     public async Task<IActionResult> GetRecentReports([FromQuery] int userId)
     {
+        var user = await GetBhwUserAsync(userId);
+        if (user == null)
+        {
+            return NotFound(new { success = false, message = "BHW not found." });
+        }
+
         var reports = await _context.Reports
             .Include(report => report.Patient)
             .ThenInclude(patient => patient!.Household)
             .ThenInclude(household => household!.Members)
-            .Where(report => report.GeneratedBy == userId)
+            .Where(report => report.GeneratedBy == user.UserID)
             .OrderByDescending(report => report.DateGenerated)
             .Take(10)
             .ToListAsync();
@@ -225,11 +263,17 @@ public class BHWApiController : ControllerBase
     [HttpGet("consultationlogs")]
     public async Task<IActionResult> GetConsultationLogs([FromQuery] int userId)
     {
+        var user = await GetBhwUserAsync(userId);
+        if (user == null)
+        {
+            return NotFound(new { success = false, message = "BHW not found." });
+        }
+
         var reports = await _context.Reports
             .Include(report => report.Patient)
             .ThenInclude(patient => patient!.Household)
             .ThenInclude(household => household!.Members)
-            .Where(report => report.GeneratedBy == userId)
+            .Where(report => report.GeneratedBy == user.UserID)
             .OrderByDescending(report => report.DateGenerated)
             .ToListAsync();
 
@@ -418,7 +462,16 @@ public class BHWApiController : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(request.Email))
         {
-            user.Email = request.Email.Trim().ToLowerInvariant();
+            var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+            var emailInUse = await _context.Users.AnyAsync(existingUser =>
+                existingUser.UserID != user.UserID &&
+                existingUser.Email == normalizedEmail);
+            if (emailInUse)
+            {
+                return BadRequest(new { success = false, message = "Email already exists." });
+            }
+
+            user.Email = normalizedEmail;
         }
 
         if (request.ContactNumber != null)
@@ -483,6 +536,12 @@ public class BHWApiController : ControllerBase
     [HttpGet("insights")]
     public async Task<IActionResult> GetInsights([FromQuery] int userId)
     {
+        var user = await GetBhwUserAsync(userId);
+        if (user == null)
+        {
+            return NotFound(new { success = false, message = "BHW not found." });
+        }
+
         var insights = await _aiAssistantService.BuildBhwInsightsAsync();
         return Ok(insights.Select((insight, index) => new
         {
@@ -545,7 +604,9 @@ public class BHWApiController : ControllerBase
     {
         if (userId is int resolvedUserId && resolvedUserId > 0)
         {
-            return await _context.Users.FindAsync(resolvedUserId);
+            return await _context.Users.FirstOrDefaultAsync(user =>
+                user.UserID == resolvedUserId &&
+                user.Role == "BHW");
         }
 
         if (string.IsNullOrWhiteSpace(username))
@@ -560,28 +621,69 @@ public class BHWApiController : ControllerBase
              user.Email.ToLower().StartsWith(normalizedUsername + "@")));
     }
 
-    private async Task<List<int>> GetAssignedHouseholdIdsAsync(int userId)
+    private async Task<User?> GetBhwUserAsync(int userId)
     {
-        return await _context.TaskAssignments
-            .Where(task => task.BHWID == userId && task.HouseholdID.HasValue)
+        if (userId <= 0)
+        {
+            return null;
+        }
+
+        return await _context.Users.FirstOrDefaultAsync(user =>
+            user.UserID == userId &&
+            user.Role == "BHW");
+    }
+
+    private async Task<List<int>> GetAccessibleHouseholdIdsAsync(User user)
+    {
+        var assignedTaskHouseholdIds = await _context.TaskAssignments
+            .Where(task => task.BHWID == user.UserID && task.HouseholdID.HasValue)
             .Select(task => task.HouseholdID!.Value)
             .Distinct()
             .ToListAsync();
+
+        var submittedRecordHouseholdIds = await _context.HealthRecords
+            .Where(record => record.BHWID == user.UserID && record.PatientID.HasValue)
+            .Join(
+                _context.HouseholdMembers,
+                record => record.PatientID!.Value,
+                member => member.MemberID,
+                (_, member) => member.HouseholdID)
+            .Distinct()
+            .ToListAsync();
+
+        var submittedReportHouseholdIds = await _context.Reports
+            .Where(report => report.GeneratedBy == user.UserID && report.PatientID.HasValue)
+            .Join(
+                _context.HouseholdMembers,
+                report => report.PatientID!.Value,
+                member => member.MemberID,
+                (_, member) => member.HouseholdID)
+            .Distinct()
+            .ToListAsync();
+
+        var areaHouseholdIds = string.IsNullOrWhiteSpace(user.AssignedArea)
+            ? []
+            : await _context.Households
+                .Where(household => household.Address.Contains(user.AssignedArea!.Trim()))
+                .Select(household => household.HouseholdID)
+                .Distinct()
+                .ToListAsync();
+
+        return assignedTaskHouseholdIds
+            .Concat(submittedRecordHouseholdIds)
+            .Concat(submittedReportHouseholdIds)
+            .Concat(areaHouseholdIds)
+            .Distinct()
+            .ToList();
     }
 
-    private async Task<List<Household>> GetAccessibleHouseholdsAsync(int userId)
+    private async Task<List<Household>> GetAccessibleHouseholdsAsync(User user)
     {
-        var assignedHouseholdIds = await GetAssignedHouseholdIdsAsync(userId);
-        var query = _context.Households
+        var accessibleHouseholdIds = await GetAccessibleHouseholdIdsAsync(user);
+
+        return await _context.Households
             .Include(household => household.Members)
-            .AsQueryable();
-
-        if (assignedHouseholdIds.Count > 0)
-        {
-            query = query.Where(household => assignedHouseholdIds.Contains(household.HouseholdID));
-        }
-
-        return await query
+            .Where(household => accessibleHouseholdIds.Contains(household.HouseholdID))
             .OrderByDescending(household => household.RiskScore)
             .ThenBy(household => household.Address)
             .ToListAsync();
@@ -601,11 +703,14 @@ public class BHWApiController : ControllerBase
 
         if (userId is int resolvedUserId && resolvedUserId > 0)
         {
-            var assignedHouseholdIds = await GetAssignedHouseholdIdsAsync(resolvedUserId);
-            if (assignedHouseholdIds.Count > 0)
+            var user = await GetBhwUserAsync(resolvedUserId);
+            if (user == null)
             {
-                query = query.Where(patient => assignedHouseholdIds.Contains(patient.HouseholdID));
+                return null;
             }
+
+            var accessibleHouseholdIds = await GetAccessibleHouseholdIdsAsync(user);
+            query = query.Where(patient => accessibleHouseholdIds.Contains(patient.HouseholdID));
         }
 
         return await query.FirstOrDefaultAsync();
@@ -649,7 +754,7 @@ public class BHWApiController : ControllerBase
             emergencyContactNumber = emergencyContact?.ContactNumber,
             dateRecorded = record.DateRecorded,
             disease = record.Disease,
-            symptoms = record.Symptoms,
+            symptoms = record.DisplaySymptoms,
             status = record.Status
         };
     }
@@ -671,7 +776,7 @@ public class BHWApiController : ControllerBase
             emergencyContactName = emergencyContact?.FullName,
             emergencyContactNumber = emergencyContact?.ContactNumber,
             reportType = report.ReportType,
-            content = report.Content,
+            content = report.DisplayContent,
             dateGenerated = report.DateGenerated
         };
     }
@@ -693,7 +798,7 @@ public class BHWApiController : ControllerBase
             emergencyContactName = emergencyContact?.FullName,
             emergencyContactNumber = emergencyContact?.ContactNumber,
             reportType = report.ReportType,
-            content = report.Content,
+            content = report.DisplayContent,
             dateSubmitted = report.DateGenerated.ToString("g")
         };
     }
@@ -789,6 +894,8 @@ public class LoginRequest
 
 public class UpdateTaskStatusRequest
 {
+    public int? UserID { get; set; }
+    public string? Username { get; set; }
     public int TaskID { get; set; }
     public int Id { get; set; }
     public string Status { get; set; } = string.Empty;

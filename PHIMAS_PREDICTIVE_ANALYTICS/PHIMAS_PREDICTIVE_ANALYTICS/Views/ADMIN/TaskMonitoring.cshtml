@@ -63,7 +63,7 @@
                     <div class="insight-item">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h4>@recommendation.HouseholdName</h4>
-                            <span class="severity-pill @(recommendation.RiskScore >= 80 ? "high" : "medium")">Risk @recommendation.RiskScore:0</span>
+                            <span class="severity-pill @(recommendation.RiskScore >= 80 ? "high" : "medium")">Risk @($"{recommendation.RiskScore:0}")</span>
                         </div>
                         <p><strong>@recommendation.RecommendedBHWName</strong> recommended for @recommendation.Address.</p>
                         <p class="mt-2">@recommendation.Reason</p>

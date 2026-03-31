@@ -10,44 +10,98 @@
             <input class="form-control" type="text" name="search" value="@Model.Search" placeholder="Search households, addresses, or members" />
             <button class="btn btn-outline-success" type="submit">Search</button>
         </form>
+        @if (TempData["Message"] is string message)
+        {
+            <span class="text-success">@message</span>
+        }
+        @if (TempData["Error"] is string error)
+        {
+            <span class="text-danger">@error</span>
+        }
     </div>
 
-    <div class="table-shell">
-        <h3 class="section-title">Household Registry</h3>
-        <p class="section-subtitle">Households are read-only here. Creation and edits are restricted to BHW-linked submissions to keep one household source of truth.</p>
-        <div class="stack-list">
-            @if (!Model.Households.Any())
-            {
-                <div class="stack-item">
-                    <p class="mb-0 text-secondary">No households found.</p>
+    <section class="page-grid-2">
+        <div class="form-shell">
+            <h3 class="section-title">Add Household</h3>
+            <p class="section-subtitle">Admin can register, update, or remove households directly when field data needs correction.</p>
+            <form asp-action="SaveHousehold" method="post" class="form-grid">
+                <input asp-for="Form.HouseholdID" type="hidden" />
+                <div asp-validation-summary="ModelOnly" class="text-danger full-width"></div>
+                <div>
+                    <label asp-for="Form.HouseholdMember" class="form-label">Household Head</label>
+                    <input asp-for="Form.HouseholdMember" class="form-control" placeholder="Enter household head or primary contact" />
                 </div>
-            }
-            else
-            {
-                @foreach (var household in Model.Households)
+                <div>
+                    <label asp-for="Form.RiskScore" class="form-label">Risk Score</label>
+                    <input asp-for="Form.RiskScore" type="number" step="0.1" class="form-control" />
+                </div>
+                <div class="full-width">
+                    <label asp-for="Form.Address" class="form-label">Address</label>
+                    <textarea asp-for="Form.Address" rows="3" class="form-control" placeholder="Enter full household address"></textarea>
+                </div>
+                <div class="full-width">
+                    <label asp-for="Form.MembersInput" class="form-label">Additional Members</label>
+                    <textarea asp-for="Form.MembersInput" rows="5" class="form-control" placeholder="One member per line"></textarea>
+                    <small class="text-secondary">The household head above is stored as the primary member. Additional names are kept as household members.</small>
+                </div>
+                <div class="full-width">
+                    <button class="btn btn-success" type="submit">Save Household</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-shell">
+            <h3 class="section-title">Household Registry</h3>
+            <p class="section-subtitle">Edits here update the household and member registry used by reports, records, and task assignment.</p>
+            <div class="stack-list">
+                @if (!Model.Households.Any())
                 {
-                    var emergencyContact = household.GetEmergencyContact();
                     <div class="stack-item">
-                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <h4>@household.HouseholdMember</h4>
-                            <span class="severity-pill @(household.RiskScore >= 70 ? "high" : household.RiskScore >= 40 ? "medium" : "info")">
-                                Risk @(household.RiskScore?.ToString("0") ?? "0")
-                            </span>
-                        </div>
-                        <p class="mb-1">@household.Address</p>
-                        <small class="text-secondary">
-                            Household ID @household.HouseholdID |
-                            Members: @household.NumberOfMembers |
-                            Emergency: @(emergencyContact?.FullName ?? "Not set")@(string.IsNullOrWhiteSpace(emergencyContact?.ContactNumber) ? string.Empty : $" ({emergencyContact?.ContactNumber})")
-                        </small>
-                        <div class="mt-2">
-                            <small class="text-secondary">
-                                Patients: @string.Join(", ", household.GetOrderedMembers().Select(member => member.FullName))
-                            </small>
-                        </div>
+                        <p class="mb-0 text-secondary">No households found.</p>
                     </div>
                 }
-            }
+                else
+                {
+                    @foreach (var household in Model.Households)
+                    {
+                        var emergencyContact = household.GetEmergencyContact();
+                        <div class="stack-item">
+                            <form asp-action="SaveHousehold" method="post" class="form-grid">
+                                <input type="hidden" name="Form.HouseholdID" value="@household.HouseholdID" />
+                                <div>
+                                    <label class="form-label">Household Head</label>
+                                    <input class="form-control" name="Form.HouseholdMember" value="@household.HouseholdMember" />
+                                </div>
+                                <div>
+                                    <label class="form-label">Risk Score</label>
+                                    <input class="form-control" type="number" step="0.1" name="Form.RiskScore" value="@household.RiskScore" />
+                                </div>
+                                <div class="full-width">
+                                    <label class="form-label">Address</label>
+                                    <textarea class="form-control" name="Form.Address" rows="3">@household.Address</textarea>
+                                </div>
+                                <div class="full-width">
+                                    <label class="form-label">Additional Members</label>
+                                    <textarea class="form-control" name="Form.MembersInput" rows="4">@household.GetAdditionalMembersText()</textarea>
+                                </div>
+                                <div class="full-width d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                    <small class="text-secondary">
+                                        Emergency: @(emergencyContact?.FullName ?? "Not set")@(string.IsNullOrWhiteSpace(emergencyContact?.ContactNumber) ? string.Empty : $" ({emergencyContact?.ContactNumber})")
+                                    </small>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-outline-success" type="submit">Update</button>
+                                        <button class="btn btn-outline-danger" type="submit" formaction="@Url.Action("DeleteHousehold", "Admin", new { id = household.HouseholdID })" formmethod="post">Delete</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    }
+                }
+            </div>
         </div>
-    </div>
+    </section>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

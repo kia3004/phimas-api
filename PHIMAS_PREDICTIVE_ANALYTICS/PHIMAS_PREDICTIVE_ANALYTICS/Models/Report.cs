@@ -22,6 +22,9 @@ public class Report
     [StringLength(4000)]
     public string Content { get; set; } = string.Empty;
 
+    [NotMapped]
+    public string DisplayContent => HealthRecord.NormalizeSymptomsForDisplay(Content, ReportType);
+
     [ForeignKey(nameof(GeneratedBy))]
     public User? GeneratedByUser { get; set; }
 
