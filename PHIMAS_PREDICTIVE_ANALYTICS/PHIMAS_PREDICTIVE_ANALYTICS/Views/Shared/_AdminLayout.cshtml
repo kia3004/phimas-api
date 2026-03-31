@@ -46,11 +46,10 @@
                     <h2>@(ViewData["Title"] ?? "PHIMAS Dashboard")</h2>
                     <p>Signed in as @(User.Identity?.Name ?? "Administrator")</p>
                 </div>
-                <label class="theme-switch">
-                    <i class="bi bi-moon-stars-fill"></i>
-                    <span>Night Mode</span>
-                    <input type="checkbox" class="form-check-input mt-0" data-theme-toggle />
-                </label>
+                <button type="button" class="theme-switch" data-theme-toggle role="switch" aria-checked="false" aria-label="Toggle color theme">
+                    <span class="theme-switch__icon theme-switch__icon--sun" aria-hidden="true"><i class="bi bi-sun-fill"></i></span>
+                    <span class="theme-switch__icon theme-switch__icon--moon" aria-hidden="true"><i class="bi bi-moon-stars-fill"></i></span>
+                </button>
             </header>
 
             @RenderBody()
