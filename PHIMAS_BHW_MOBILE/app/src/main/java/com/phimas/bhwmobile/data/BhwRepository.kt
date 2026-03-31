@@ -83,6 +83,12 @@ class BhwRepository(
 
     fun getApiBaseUrl(): String = apiBaseUrl
 
+    fun isDarkThemeEnabled(): Boolean = sessionStore.loadDarkThemeEnabled()
+
+    fun setDarkThemeEnabled(isDarkThemeEnabled: Boolean) {
+        sessionStore.saveDarkThemeEnabled(isDarkThemeEnabled)
+    }
+
     fun updateApiBaseUrl(baseUrl: String): String {
         val normalized = normalize(baseUrl)
         val newService = ApiService.create(normalized)

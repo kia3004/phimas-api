@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -37,7 +38,9 @@ import androidx.compose.material.icons.automirrored.outlined.ExitToApp
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.AddAPhoto
 import androidx.compose.material.icons.outlined.AssignmentTurnedIn
+import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.SpaceDashboard
 import androidx.compose.material3.Button
@@ -77,6 +80,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -118,9 +122,14 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            BhwMobileTheme {
+            val state by viewModel.state.collectAsStateWithLifecycle()
+
+            BhwMobileTheme(useDarkTheme = state.isDarkTheme) {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    BhwApp(viewModel = viewModel)
+                    BhwApp(
+                        state = state,
+                        viewModel = viewModel,
+                    )
                 }
             }
         }
@@ -129,7 +138,7 @@ class MainActivity : ComponentActivity() {
 
 private enum class AppTab(
     val label: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val icon: ImageVector,
 ) {
     Dashboard("Dashboard", Icons.Outlined.SpaceDashboard),
     Tasks("Tasks", Icons.Outlined.AssignmentTurnedIn),
@@ -144,8 +153,10 @@ private data class ChoiceItem(
 )
 
 @Composable
-private fun BhwApp(viewModel: MainViewModel) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+private fun BhwApp(
+    state: AppUiState,
+    viewModel: MainViewModel,
+) {
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(state.userMessage) {
@@ -158,16 +169,20 @@ private fun BhwApp(viewModel: MainViewModel) {
         state.isInitializing -> LoadingScreen()
         state.session == null -> LoginScreen(
             apiBaseUrl = state.apiBaseUrl,
+            isDarkTheme = state.isDarkTheme,
             isAuthenticating = state.isAuthenticating,
             errorMessage = state.authError,
             onLogin = viewModel::login,
+            onThemeChange = viewModel::setDarkTheme,
         )
 
         else -> MainShell(
             state = state,
+            isDarkTheme = state.isDarkTheme,
             snackbarHostState = snackbarHostState,
             onRefresh = { viewModel.refreshAll(silent = true) },
             onLogout = viewModel::logout,
+            onThemeChange = viewModel::setDarkTheme,
             onUpdateAvailability = viewModel::updateAvailability,
             onUpdateTaskStatus = viewModel::updateTaskStatus,
             onSubmitHealthRecord = viewModel::submitHealthRecord,
@@ -196,9 +211,11 @@ private fun LoadingScreen() {
 @Composable
 private fun LoginScreen(
     apiBaseUrl: String,
+    isDarkTheme: Boolean,
     isAuthenticating: Boolean,
     errorMessage: String?,
     onLogin: (String, String, String) -> Unit,
+    onThemeChange: (Boolean) -> Unit,
 ) {
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
@@ -207,10 +224,19 @@ private fun LoginScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
-        contentAlignment = Alignment.Center,
     ) {
+        ThemeToggle(
+            isDarkTheme = isDarkTheme,
+            onThemeChange = onThemeChange,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .statusBarsPadding(),
+        )
+
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.Center),
             shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -284,9 +310,11 @@ private fun LoginScreen(
 @Composable
 private fun MainShell(
     state: AppUiState,
+    isDarkTheme: Boolean,
     snackbarHostState: SnackbarHostState,
     onRefresh: () -> Unit,
     onLogout: () -> Unit,
+    onThemeChange: (Boolean) -> Unit,
     onUpdateAvailability: (Boolean) -> Unit,
     onUpdateTaskStatus: (Int, String) -> Unit,
     onSubmitHealthRecord: (String, String, String, String, String, String, String, String, String) -> Unit,
@@ -337,6 +365,11 @@ private fun MainShell(
                     }
                 },
                 actions = {
+                    ThemeToggle(
+                        isDarkTheme = isDarkTheme,
+                        onThemeChange = onThemeChange,
+                        modifier = Modifier.padding(end = 4.dp),
+                    )
                     if (state.isRefreshing || state.isWorking) {
                         CircularProgressIndicator(
                             modifier = Modifier
@@ -437,6 +470,66 @@ private fun MainShell(
                     onUploadProfilePicture = onUploadProfilePicture,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun ThemeToggle(
+    isDarkTheme: Boolean,
+    onThemeChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier,
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Row(
+            modifier = Modifier.padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            ThemeToggleOption(
+                icon = Icons.Outlined.LightMode,
+                contentDescription = "Light mode",
+                selected = !isDarkTheme,
+                onClick = { onThemeChange(false) },
+            )
+            ThemeToggleOption(
+                icon = Icons.Outlined.DarkMode,
+                contentDescription = "Dark mode",
+                selected = isDarkTheme,
+                onClick = { onThemeChange(true) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ThemeToggleOption(
+    icon: ImageVector,
+    contentDescription: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        shape = CircleShape,
+        color = if (selected) MaterialTheme.colorScheme.surface else Color.Transparent,
+    ) {
+        IconButton(
+            onClick = onClick,
+            modifier = Modifier.size(32.dp),
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                tint = if (selected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+            )
         }
     }
 }

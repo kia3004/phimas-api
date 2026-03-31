@@ -47,10 +47,21 @@ class SessionStore(context: Context) {
             ?.takeIf { it.isNotBlank() }
     }
 
+    fun saveDarkThemeEnabled(isDarkThemeEnabled: Boolean) {
+        preferences.edit()
+            .putBoolean(KEY_DARK_THEME_ENABLED, isDarkThemeEnabled)
+            .apply()
+    }
+
+    fun loadDarkThemeEnabled(): Boolean {
+        return preferences.getBoolean(KEY_DARK_THEME_ENABLED, false)
+    }
+
     private companion object {
         private const val PREFERENCES_NAME = "bhw_mobile_session"
         private const val KEY_USER_ID = "user_id"
         private const val KEY_USERNAME = "username"
         private const val KEY_API_BASE_URL = "api_base_url"
+        private const val KEY_DARK_THEME_ENABLED = "dark_theme_enabled"
     }
 }

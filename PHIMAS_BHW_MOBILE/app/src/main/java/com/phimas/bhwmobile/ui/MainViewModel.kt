@@ -31,6 +31,7 @@ data class AppUiState(
     val isRefreshing: Boolean = false,
     val isWorking: Boolean = false,
     val apiBaseUrl: String = BuildConfig.API_BASE_URL,
+    val isDarkTheme: Boolean = false,
     val session: UserSession? = null,
     val profile: BhwProfileDto? = null,
     val dashboard: DashboardSummaryDto? = null,
@@ -48,7 +49,10 @@ class MainViewModel(
     private val repository: BhwRepository,
 ) : ViewModel() {
     private val _state = kotlinx.coroutines.flow.MutableStateFlow(
-        AppUiState(apiBaseUrl = repository.getApiBaseUrl()),
+        AppUiState(
+            apiBaseUrl = repository.getApiBaseUrl(),
+            isDarkTheme = repository.isDarkThemeEnabled(),
+        ),
     )
     val state = _state.asStateFlow()
 
@@ -94,6 +98,7 @@ class MainViewModel(
         _state.value = AppUiState(
             isInitializing = false,
             apiBaseUrl = repository.getApiBaseUrl(),
+            isDarkTheme = repository.isDarkThemeEnabled(),
         )
     }
 
@@ -131,6 +136,15 @@ class MainViewModel(
 
     fun dismissMessage() {
         _state.value = _state.value.copy(userMessage = null)
+    }
+
+    fun setDarkTheme(isDarkTheme: Boolean) {
+        if (_state.value.isDarkTheme == isDarkTheme) {
+            return
+        }
+
+        repository.setDarkThemeEnabled(isDarkTheme)
+        _state.value = _state.value.copy(isDarkTheme = isDarkTheme)
     }
 
     fun updateTaskStatus(taskId: Int, status: String) {
@@ -236,6 +250,7 @@ class MainViewModel(
             _state.value = AppUiState(
                 isInitializing = false,
                 apiBaseUrl = repository.getApiBaseUrl(),
+                isDarkTheme = repository.isDarkThemeEnabled(),
             )
             return
         }

@@ -36,9 +36,12 @@ private val DarkColors = darkColorScheme(
 )
 
 @Composable
-fun BhwMobileTheme(content: @Composable () -> Unit) {
+fun BhwMobileTheme(
+    useDarkTheme: Boolean,
+    content: @Composable () -> Unit,
+) {
     MaterialTheme(
-        colorScheme = if (androidx.compose.foundation.isSystemInDarkTheme()) DarkColors else LightColors,
+        colorScheme = if (useDarkTheme) DarkColors else LightColors,
         typography = Typography(),
         content = content,
     )
