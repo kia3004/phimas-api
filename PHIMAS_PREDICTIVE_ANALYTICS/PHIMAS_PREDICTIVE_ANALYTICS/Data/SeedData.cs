@@ -18,7 +18,12 @@ public static class SeedData
         new("Pagdalagan, Purok 6, San Fernando City, La Union", 54, "Joel Mendoza", ["Arvin Mendoza", "Trisha Mendoza", "Kurt Mendoza", "Faith Mendoza", "Janine Mendoza"]),
         new("Biday, Purok 3, San Fernando City, La Union", 47, "Helen Corpuz", ["Cedric Corpuz", "Mae Corpuz", "Janelle Corpuz", "Bryan Corpuz", "Cyril Corpuz"]),
         new("Tanqui, Purok 1, San Fernando City, La Union", 52, "Rodolfo Flores", ["Karen Flores", "Enzo Flores", "Mara Flores", "Patrick Flores", "Celine Flores"]),
-        new("Pagdaraoan, Zone 2, San Fernando City, La Union", 57, "Teresita Navarro", ["Miko Navarro", "Jessa Navarro", "Alden Navarro", "Bianca Navarro", "Marlon Navarro"])
+        new("Pagdaraoan, Zone 2, San Fernando City, La Union", 57, "Teresita Navarro", ["Miko Navarro", "Jessa Navarro", "Alden Navarro", "Bianca Navarro", "Marlon Navarro"]),
+        new("Camansi, Purok 2, San Fernando City, La Union", 49, "Nestor Valdez", ["Rhea Valdez", "Kyle Valdez", "Marvin Valdez", "Shane Valdez", "Lyn Valdez"]),
+        new("Lingsat, Riverside, San Fernando City, La Union", 56, "Perla Mercado", ["Alden Mercado", "Jolina Mercado", "Nash Mercado", "Ella Mercado", "Mavi Mercado"]),
+        new("Poro, Sitio Proper, San Fernando City, La Union", 53, "Rosario Sampaga", ["Kevin Sampaga", "Mae Sampaga", "John Paul Sampaga", "Ivy Sampaga", "Sean Sampaga"]),
+        new("Ilocanos Norte, Zone 1, San Fernando City, La Union", 59, "Domingo Agcaoili", ["Leah Agcaoili", "Carlo Agcaoili", "Patricia Agcaoili", "Renz Agcaoili", "Mina Agcaoili"]),
+        new("Dalumpinas Oeste, Purok 3, San Fernando City, La Union", 46, "Nelia Soriano", ["Jerome Soriano", "Janel Soriano", "Alyssa Soriano", "Vince Soriano", "Mitch Soriano"])
     ];
 
     // Each cluster becomes a grouped case total in analytics, so counts stay within 1-20.
@@ -51,7 +56,29 @@ public static class SeedData
         new("Pagdaraoan", "Dengue", "San Vicente", -5, 17, 2, 1),
         new("Pagdaraoan", "Dengue", "San Vicente", -4, 7, 3, 3),
         new("Pagdaraoan", "Dengue", "San Vicente", -2, 18, 2, 5),
-        new("Pagdaraoan", "Dengue", "San Vicente", -1, 24, 3, 7)
+        new("Pagdaraoan", "Dengue", "San Vicente", -1, 24, 3, 7),
+        new("Camansi", "Flu", "Catbangen", -8, 12, 3, 0),
+        new("Camansi", "Flu", "Catbangen", -6, 23, 4, 2),
+        new("Camansi", "Flu", "Catbangen", -3, 5, 2, 4),
+        new("Lingsat", "COVID-19", "San Vicente", -7, 18, 3, 1),
+        new("Lingsat", "COVID-19", "San Vicente", -5, 9, 2, 4),
+        new("Lingsat", "COVID-19", "San Vicente", -2, 27, 3, 6),
+        new("Poro", "Gastroenteritis", "Sevilla", -8, 27, 4, 0),
+        new("Poro", "Gastroenteritis", "Sevilla", -6, 14, 3, 2),
+        new("Poro", "Gastroenteritis", "Sevilla", -3, 22, 2, 4),
+        new("Ilocanos Norte", "Dengue", "San Vicente", -7, 20, 2, 0),
+        new("Ilocanos Norte", "Dengue", "San Vicente", -5, 11, 3, 2),
+        new("Ilocanos Norte", "Dengue", "San Vicente", -2, 9, 4, 5),
+        new("Dalumpinas Oeste", "Flu", "Catbangen", -8, 7, 2, 5),
+        new("Dalumpinas Oeste", "Flu", "Catbangen", -6, 19, 3, 1),
+        new("Dalumpinas Oeste", "Flu", "Catbangen", -3, 26, 2, 3),
+        new("Pagdalagan", "Flu", "Catbangen", -8, 10, 2, 6),
+        new("Biday", "COVID-19", "San Vicente", -7, 25, 2, 3),
+        new("Tanqui", "Dengue", "Sevilla", -8, 15, 3, 2),
+        new("Pagdaraoan", "Gastroenteritis", "Sevilla", -7, 10, 2, 1),
+        new("San Vicente", "Gastroenteritis", "San Vicente", -8, 5, 3, 5),
+        new("Catbangen", "COVID-19", "Catbangen", -7, 13, 2, 0),
+        new("Sevilla", "Flu", "Sevilla", -8, 24, 3, 4)
     ];
 
     private static readonly IReadOnlyDictionary<string, string[]> SymptomsByDisease =
