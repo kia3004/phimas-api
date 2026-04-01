@@ -30,3 +30,9 @@ Thumbs.db
 *.err
 *.out
 *.user
+*.cookies
+**/build-verify/
+**/reports-diagnose.html
+**/verify-*.html
+**/verify-*.json
+**/verify-*.cookies

@@ -4,7 +4,7 @@
     Layout = "~/Views/Shared/_CoreLayout.cshtml";
     ViewData["Title"] = "CHO Dashboard";
     var diseaseTrendJson = JsonSerializer.Serialize(Model.DiseaseTrend);
-    var riskTrendJson = JsonSerializer.Serialize(Model.HouseholdRiskTrend);
+    var riskTrendJson = JsonSerializer.Serialize(Model.HighRiskBarangayTrend);
 }
 
 <div class="section-grid">
@@ -28,8 +28,8 @@
             </div>
 
             <div class="surface-card chart-card">
-                <h3 class="section-title">High-Risk Household Profile</h3>
-                <p class="section-subtitle">Households with the highest computed risk score.</p>
+                <h3 class="section-title">High-Risk Barangays (Predicted)</h3>
+                <p class="section-subtitle">Top 5 barangays from the latest predictive analysis batch.</p>
                 <canvas id="riskProfileChart"></canvas>
             </div>
         </div>
@@ -83,8 +83,8 @@
     <section class="table-shell">
         <div class="toolbar">
             <div>
-                <h3 class="section-title">High-Risk Households</h3>
-                <p class="section-subtitle">Priority households identified by predictive analytics.</p>
+                <h3 class="section-title">High-Risk Barangays (Predicted)</h3>
+                <p class="section-subtitle">Grouped by barangay and ranked by total predicted cases.</p>
             </div>
             <a class="btn btn-success" asp-controller="CHO" asp-action="TaskMonitoring">Open Task Monitoring</a>
         </div>
@@ -92,21 +92,30 @@
             <table class="table table-borderless align-middle">
                 <thead>
                     <tr>
-                        <th>Household</th>
-                        <th>Address</th>
-                        <th>Members</th>
-                        <th>Risk Score</th>
+                        <th>Barangay</th>
+                        <th>Total Predicted Cases</th>
+                        <th>Prediction Entries</th>
+                        <th>Date Generated</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var household in Model.HighRiskHouseholds)
+                    @if (!Model.HighRiskBarangaySnapshot.Barangays.Any())
                     {
                         <tr>
-                            <td>@household.HouseholdMember</td>
-                            <td>@household.Address</td>
-                            <td>@household.NumberOfMembers</td>
-                            <td><span class="severity-pill high">@($"{household.RiskScore:0}")</span></td>
+                            <td colspan="4" class="text-secondary">No saved predictive-analysis data is available yet.</td>
                         </tr>
+                    }
+                    else
+                    {
+                        @foreach (var barangay in Model.HighRiskBarangaySnapshot.Barangays)
+                        {
+                            <tr>
+                                <td>@barangay.Barangay</td>
+                                <td>@barangay.TotalCases</td>
+                                <td>@barangay.PredictionEntries</td>
+                                <td>@barangay.LatestGenerated.ToString("MMM dd, yyyy")</td>
+                            </tr>
+                        }
                     }
                 </tbody>
             </table>
@@ -140,7 +149,7 @@
             data: {
                 labels: riskTrend.map(item => item.Label),
                 datasets: [{
-                    label: "Risk Score",
+                    label: "Predicted Cases",
                     data: riskTrend.map(item => item.Value),
                     backgroundColor: "rgba(214, 167, 44, 0.72)"
                 }]

@@ -1,47 +1,61 @@
-﻿<!DOCTYPE html>
+@{
+    var title = ViewData["Title"]?.ToString();
+    var pageTitle = string.IsNullOrWhiteSpace(title) || string.Equals(title, "PHIMAS", StringComparison.OrdinalIgnoreCase)
+        ? "PHIMAS"
+        : $"{title} - PHIMAS";
+    var path = Context.Request.Path.Value ?? string.Empty;
+    var isHomePage = path.Equals("/", StringComparison.OrdinalIgnoreCase) || path.Equals("/Home", StringComparison.OrdinalIgnoreCase) || path.Equals("/Home/Index", StringComparison.OrdinalIgnoreCase);
+    var isSignInPage = path.Equals("/Account/SignIn", StringComparison.OrdinalIgnoreCase);
+    var isSignUpPage = path.Equals("/Account/SignUp", StringComparison.OrdinalIgnoreCase);
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - PHIMAS_PREDICTIVE_ANALYTICS</title>
-    <script type="importmap"></script>
+    <title>@pageTitle</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/PHIMAS_PREDICTIVE_ANALYTICS.styles.css" asp-append-version="true" />
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">PHIMAS_PREDICTIVE_ANALYTICS</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+<body class="phimas-public">
+    <div class="public-shell">
+        <header class="public-header">
+            <a class="public-brand" asp-area="" asp-controller="Home" asp-action="Index" aria-label="PHIMAS home">
+                <span class="public-brand__logos">
+                    <img src="~/images/LOGOP.png" alt="PHIMAS logo" />
+                    <img src="~/images/citylogo1.png" alt="City logo 1" />
+                    <img src="~/images/citylogo2.png" alt="City logo 2" />
+                </span>
+                <span class="public-brand__copy">
+                    <strong>PHIMAS</strong>
+                    <span>Public Health Information Management and Analytics System</span>
+                </span>
+            </a>
+
+            <nav class="public-nav" aria-label="Primary">
+                <a class="public-nav__link @(isHomePage ? "is-active" : null)"
+                   asp-area=""
+                   asp-controller="Home"
+                   asp-action="Index">Home</a>
+                <a class="public-nav__link @(isSignInPage ? "is-active" : null)"
+                   asp-controller="Account"
+                   asp-action="SignIn">Sign In</a>
+                <a class="public-nav__link public-nav__link--cta @(isSignUpPage ? "is-active" : null)"
+                   asp-controller="Account"
+                   asp-action="SignUp">Sign Up</a>
+            </nav>
+        </header>
+
+        <main class="public-main @(isSignInPage || isSignUpPage ? "public-main--auth" : "public-main--content")" role="main">
             @RenderBody()
         </main>
+
+        <footer class="public-footer">
+            <span>PHIMAS</span>
+            <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </footer>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - PHIMAS_PREDICTIVE_ANALYTICS - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

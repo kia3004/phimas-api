@@ -33,6 +33,21 @@ public class AssistantInsightViewModel
     public string Severity { get; set; } = "Info";
 }
 
+public class BarangayPredictionSummaryViewModel
+{
+    public string Barangay { get; set; } = string.Empty;
+    public int TotalCases { get; set; }
+    public int PredictionEntries { get; set; }
+    public DateTime LatestGenerated { get; set; }
+}
+
+public class BarangayPredictionSnapshotViewModel
+{
+    public DateTime? LatestPredictionDate { get; set; }
+    public int TotalBarangays { get; set; }
+    public List<BarangayPredictionSummaryViewModel> Barangays { get; set; } = [];
+}
+
 public class TaskListItemViewModel
 {
     public int TaskID { get; set; }
@@ -72,9 +87,9 @@ public class ChoDashboardViewModel
 {
     public List<DashboardCardViewModel> Cards { get; set; } = [];
     public List<ChartPointViewModel> DiseaseTrend { get; set; } = [];
-    public List<ChartPointViewModel> HouseholdRiskTrend { get; set; } = [];
+    public List<ChartPointViewModel> HighRiskBarangayTrend { get; set; } = [];
     public List<DiseaseForecastViewModel> Forecasts { get; set; } = [];
-    public List<Household> HighRiskHouseholds { get; set; } = [];
+    public BarangayPredictionSnapshotViewModel HighRiskBarangaySnapshot { get; set; } = new();
     public List<AssistantInsightViewModel> Insights { get; set; } = [];
 }
 
@@ -189,6 +204,8 @@ public class PredictiveAnalyticsPageViewModel
     public PredictiveAnalysis? LatestAnalysis { get; set; }
     public List<DiseaseForecastViewModel> Forecasts { get; set; } = [];
     public List<ChartPointViewModel> DiseaseTrend { get; set; } = [];
+    public List<ChartPointViewModel> HighRiskBarangayTrend { get; set; } = [];
+    public BarangayPredictionSnapshotViewModel HighRiskBarangaySnapshot { get; set; } = new();
     public List<AssistantInsightViewModel> Insights { get; set; } = [];
 }
 

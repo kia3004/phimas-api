@@ -27,22 +27,28 @@ public class CHOController : AppControllerBase
     public async Task<IActionResult> Dashboard()
     {
         ViewData["Active"] = "Dashboard";
-        await _predictiveAnalyticsService.RecalculateHouseholdRisksAsync();
         var forecasts = await _predictiveAnalyticsService.GetForecastsAsync();
+        var highRiskBarangaySnapshot = await _predictiveAnalyticsService.GetHighRiskBarangaySnapshotAsync();
 
         var model = new ChoDashboardViewModel
         {
             Cards =
             [
                 new() { Label = "Disease Cases", Subtitle = "All captured records", Value = await Context.HealthRecords.CountAsync(), AccentClass = "accent-red" },
-                new() { Label = "High-Risk Households", Subtitle = "Risk score >= 70", Value = await Context.Households.CountAsync(household => (household.RiskScore ?? 0) >= 70), AccentClass = "accent-amber" },
+                new() { Label = "High-Risk Barangays", Subtitle = "Latest predicted outbreak areas", Value = highRiskBarangaySnapshot.TotalBarangays, AccentClass = "accent-amber" },
                 new() { Label = "Active BHWs", Subtitle = "Available workers in field", Value = await Context.Users.CountAsync(user => user.Role == "BHW" && user.IsAvailable) },
                 new() { Label = "Outbreak Alerts", Subtitle = "Forecast confidence >= 80%", Value = forecasts.Count(forecast => forecast.ConfidenceScore >= 0.8f), AccentClass = "accent-purple" }
             ],
             DiseaseTrend = await _predictiveAnalyticsService.GetDiseaseTrendAsync(),
-            HouseholdRiskTrend = await _predictiveAnalyticsService.GetRiskProfileAsync(),
+            HighRiskBarangayTrend = highRiskBarangaySnapshot.Barangays
+                .Select(item => new ChartPointViewModel
+                {
+                    Label = item.Barangay,
+                    Value = item.TotalCases
+                })
+                .ToList(),
             Forecasts = forecasts,
-            HighRiskHouseholds = await Context.Households.Where(household => (household.RiskScore ?? 0) >= 70).OrderByDescending(household => household.RiskScore).Take(6).ToListAsync(),
+            HighRiskBarangaySnapshot = highRiskBarangaySnapshot,
             Insights = await _aiAssistantService.BuildInsightsAsync()
         };
 

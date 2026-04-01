@@ -94,49 +94,78 @@ public class PredictiveAnalyticsService
             .ToList();
     }
 
-    public async Task<List<ChartPointViewModel>> GetRiskProfileAsync()
+    public async Task<BarangayPredictionSnapshotViewModel> GetHighRiskBarangaySnapshotAsync(int limit = 5)
     {
-        await RecalculateHouseholdRisksAsync();
-        var households = await _context.Households
-            .Include(household => household.Members)
-            .OrderByDescending(household => household.RiskScore)
-            .Take(6)
+        var latestPredictionDate = await GetLatestPredictionDateAsync();
+        if (!latestPredictionDate.HasValue)
+        {
+            return new BarangayPredictionSnapshotViewModel();
+        }
+
+        var batchStart = latestPredictionDate.Value.Date;
+        var batchEnd = batchStart.AddDays(1);
+
+        var latestBatch = await _context.PredictiveAnalysis
+            .AsNoTracking()
+            .Where(item =>
+                item.DateGenerated >= batchStart &&
+                item.DateGenerated < batchEnd)
+            .Select(item => new
+            {
+                Barangay = item.HighRiskBarangay,
+                PredictedCases = item.PredictedCases ?? 0,
+                item.DateGenerated
+            })
             .ToListAsync();
 
-        return households
-            .Select(household => new ChartPointViewModel
+        var groupedBarangays = latestBatch
+            .Where(item => !string.IsNullOrWhiteSpace(item.Barangay))
+            .GroupBy(item => item.Barangay.Trim(), StringComparer.OrdinalIgnoreCase)
+            .Select(group => new BarangayPredictionSummaryViewModel
             {
-                Label = household.HouseholdMember,
-                Value = Convert.ToInt32(household.RiskScore ?? 0)
+                Barangay = group.First().Barangay.Trim(),
+                TotalCases = group.Sum(item => item.PredictedCases),
+                PredictionEntries = group.Count(),
+                LatestGenerated = group.Max(item => item.DateGenerated)
             })
+            .OrderByDescending(item => item.TotalCases)
+            .ThenBy(item => item.Barangay)
             .ToList();
+
+        return new BarangayPredictionSnapshotViewModel
+        {
+            LatestPredictionDate = batchStart,
+            TotalBarangays = groupedBarangays.Count,
+            Barangays = groupedBarangays.Take(limit).ToList()
+        };
     }
 
     public async Task<List<DiseaseForecastViewModel>> GetForecastsAsync(int limit = 5)
     {
         var storedForecasts = await GetStoredForecastsAsync(limit);
-        return storedForecasts.Count > 0
-            ? storedForecasts
-            : await GenerateFallbackForecastsAsync(limit);
+        return storedForecasts.Count > 0 ? storedForecasts : [];
     }
 
     public async Task<PredictiveAnalysis?> GetLatestStoredAnalysisAsync()
     {
-        var analyses = await _context.PredictiveAnalysis
-            .AsNoTracking()
-            .OrderByDescending(item => item.DateGenerated)
-            .ThenByDescending(item => item.ConfidenceScore)
-            .ToListAsync();
+        var latestPredictionDate = await GetLatestPredictionDateAsync();
+        if (!latestPredictionDate.HasValue)
+        {
+            return null;
+        }
 
-        return analyses
-            .Where(item => !string.IsNullOrWhiteSpace(item.Disease))
-            .GroupBy(item => item.Disease.Trim(), StringComparer.OrdinalIgnoreCase)
-            .Select(SelectWinningAnalysis)
-            .OrderByDescending(item => item.DateGenerated.Date)
-            .ThenByDescending(item => item.PredictedCases ?? 0)
-            .ThenByDescending(item => NormalizeConfidence(item.ConfidenceScore))
-            .ThenByDescending(item => item.DateGenerated)
-            .FirstOrDefault();
+        var batchStart = latestPredictionDate.Value.Date;
+        var batchEnd = batchStart.AddDays(1);
+
+        return await _context.PredictiveAnalysis
+            .AsNoTracking()
+            .Where(item =>
+                item.DateGenerated >= batchStart &&
+                item.DateGenerated < batchEnd)
+            .OrderByDescending(item => item.PredictedCases ?? 0)
+            .ThenByDescending(item => item.ConfidenceScore)
+            .ThenBy(item => item.HighRiskBarangay)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<List<DiseaseForecastViewModel>> GenerateFallbackForecastsAsync(int limit = 5)
@@ -184,32 +213,45 @@ public class PredictiveAnalyticsService
 
     public async Task<PredictiveAnalyticsPageViewModel> BuildPredictivePageAsync()
     {
+        var highRiskBarangaySnapshot = await GetHighRiskBarangaySnapshotAsync();
+
         return new PredictiveAnalyticsPageViewModel
         {
             LatestAnalysis = await GetLatestStoredAnalysisAsync(),
             Forecasts = await GetForecastsAsync(),
-            DiseaseTrend = await GetDiseaseTrendAsync()
+            DiseaseTrend = await GetDiseaseTrendAsync(),
+            HighRiskBarangayTrend = highRiskBarangaySnapshot.Barangays
+                .Select(item => new ChartPointViewModel
+                {
+                    Label = item.Barangay,
+                    Value = item.TotalCases
+                })
+                .ToList(),
+            HighRiskBarangaySnapshot = highRiskBarangaySnapshot
         };
     }
 
     private async Task<List<DiseaseForecastViewModel>> GetStoredForecastsAsync(int limit)
     {
-        var analyses = await _context.PredictiveAnalysis
-            .AsNoTracking()
-            .OrderByDescending(item => item.DateGenerated)
-            .ThenByDescending(item => item.ConfidenceScore)
-            .ToListAsync();
+        var latestPredictionDate = await GetLatestPredictionDateAsync();
+        if (!latestPredictionDate.HasValue)
+        {
+            return [];
+        }
 
-        var latestAnalyses = analyses
-            .Where(item => !string.IsNullOrWhiteSpace(item.Disease))
-            .GroupBy(item => item.Disease.Trim(), StringComparer.OrdinalIgnoreCase)
-            .Select(SelectWinningAnalysis)
-            .OrderByDescending(item => item.DateGenerated.Date)
-            .ThenByDescending(item => item.PredictedCases ?? 0)
-            .ThenByDescending(item => NormalizeConfidence(item.ConfidenceScore))
-            .ThenByDescending(item => item.DateGenerated)
+        var batchStart = latestPredictionDate.Value.Date;
+        var batchEnd = batchStart.AddDays(1);
+
+        var latestAnalyses = await _context.PredictiveAnalysis
+            .AsNoTracking()
+            .Where(item =>
+                item.DateGenerated >= batchStart &&
+                item.DateGenerated < batchEnd)
+            .OrderByDescending(item => item.PredictedCases ?? 0)
+            .ThenByDescending(item => item.ConfidenceScore)
+            .ThenBy(item => item.HighRiskBarangay)
             .Take(limit)
-            .ToList();
+            .ToListAsync();
 
         if (latestAnalyses.Count == 0)
         {
@@ -244,16 +286,11 @@ public class PredictiveAnalyticsService
             .ToList();
     }
 
-    private static PredictiveAnalysis SelectWinningAnalysis(IGrouping<string, PredictiveAnalysis> group)
+    private async Task<DateTime?> GetLatestPredictionDateAsync()
     {
-        var latestDate = group.Max(item => item.DateGenerated.Date);
-
-        return group
-            .Where(item => item.DateGenerated.Date == latestDate)
-            .OrderByDescending(item => item.PredictedCases ?? 0)
-            .ThenByDescending(item => NormalizeConfidence(item.ConfidenceScore))
-            .ThenByDescending(item => item.DateGenerated)
-            .First();
+        return await _context.PredictiveAnalysis
+            .AsNoTracking()
+            .MaxAsync(item => (DateTime?)item.DateGenerated);
     }
 
     private static string ExtractArea(string? address)

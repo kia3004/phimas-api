@@ -16,3 +16,11 @@ Thumbs.db
 # Logs
 *.log
 *.crash
+*.err
+*.out
+*.cookies
+*.user
+reports-diagnose.html
+verify-*.html
+verify-*.json
+verify-*.cookies

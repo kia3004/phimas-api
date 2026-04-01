@@ -1,56 +1,54 @@
-﻿@model PHIMAS_PREDICTIVE_ANALYTICS.Models.User
+@model User
 @{
     ViewData["Title"] = "Sign Up";
 }
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<section class="auth-shell auth-shell--wide">
+    <div class="auth-card">
+        <div class="auth-mark">
+            <img src="~/images/LOGOP.png" alt="PHIMAS logo" />
+            <span>PHIMAS</span>
+        </div>
 
-<style>
-    .form-container {
-        width: 35%;
-        margin: 60px auto;
-    }
-</style>
+        <h1 class="auth-title">Create Account</h1>
 
-<div class="form-container">
-    <h2 class="text-success text-center mb-4">Create Account</h2>
-
-    <div class="card p-4 shadow">
-        <form method="post" asp-action="SignUp" asp-controller="Account">
+        <form method="post" asp-action="SignUp" asp-controller="Account" class="auth-form">
+            <div asp-validation-summary="All" class="text-danger validation-summary-errors mb-3"></div>
 
             <div class="mb-3">
-                <label asp-for="FullName"></label>
+                <label asp-for="FullName" class="form-label"></label>
                 <input asp-for="FullName" class="form-control" />
             </div>
 
             <div class="mb-3">
-                <label asp-for="Role"></label>
-                <select asp-for="Role" class="form-control">
+                <label asp-for="Role" class="form-label"></label>
+                <select asp-for="Role" class="form-select">
                     <option value="CHO">City Health Office</option>
-                    <option value="BHW">Barangay Health Workers</option>
-                    <option value="ADMIN">Admins</option>
+                    <option value="BHW">Barangay Health Worker</option>
+                    <option value="ADMIN">Admin</option>
                 </select>
             </div>
 
             <div class="mb-3">
-                <label asp-for="Email"></label>
+                <label asp-for="Email" class="form-label"></label>
                 <input asp-for="Email" class="form-control" />
             </div>
 
             <div class="mb-3">
-                <label asp-for="Password"></label>
+                <label asp-for="Password" class="form-label"></label>
                 <input asp-for="Password" class="form-control" type="password" />
             </div>
 
-            <div class="mb-3">
-                <label asp-for="ContactNumber"></label>
+            <div class="mb-4">
+                <label asp-for="ContactNumber" class="form-label"></label>
                 <input asp-for="ContactNumber" class="form-control" />
             </div>
 
-            <button type="submit" class="btn btn-success w-100">
-                Register
-            </button>
-
+            <button type="submit" class="btn btn-phimas w-100">Register</button>
         </form>
+
+        <div class="auth-switch">
+            <a asp-controller="Account" asp-action="SignIn">Already have an account?</a>
+        </div>
     </div>
-</div>
+</section>

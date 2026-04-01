@@ -4,6 +4,7 @@
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     ViewData["Title"] = "Predictive Analytics";
     var chartJson = JsonSerializer.Serialize(Model.DiseaseTrend);
+    var barangayChartJson = JsonSerializer.Serialize(Model.HighRiskBarangayTrend);
 }
 
 <div class="section-grid">
@@ -14,47 +15,45 @@
             <canvas id="predictiveTrendChart"></canvas>
         </div>
 
-        <div class="surface-card p-4">
-            <h3 class="section-title">Latest Prediction Snapshot</h3>
-            <p class="section-subtitle">The most recent predictive analysis stored in the database.</p>
-            @if (Model.LatestAnalysis != null)
-            {
-                <div class="stack-item">
-                    <h4>@Model.LatestAnalysis.Disease</h4>
-                    <p>@Model.LatestAnalysis.PredictedCases projected cases in @Model.LatestAnalysis.HighRiskBarangay.</p>
-                    <span class="severity-pill @(Model.LatestAnalysis.ConfidenceScore >= 0.8f ? "high" : "medium")">@($"{Model.LatestAnalysis.ConfidenceScore:P0}")</span>
-                </div>
-            }
-            else
-            {
-                <div class="stack-item">
-                    <p class="mb-0 text-secondary">No saved predictive-module analysis is available yet.</p>
-                </div>
-            }
+        <div class="surface-card chart-card">
+            <h3 class="section-title">High-Risk Barangays (Predicted)</h3>
+            <p class="section-subtitle">
+                Top 5 barangays grouped from the latest predictive-analysis batch
+                @if (Model.HighRiskBarangaySnapshot.LatestPredictionDate.HasValue)
+                {
+                    <text>(@Model.HighRiskBarangaySnapshot.LatestPredictionDate.Value.ToString("MMM dd, yyyy")).</text>
+                }
+                else
+                {
+                    <text>.</text>
+                }
+            </p>
+            <canvas id="adminBarangayRiskChart"></canvas>
         </div>
     </section>
 
     <section class="page-grid-2">
         <div class="surface-card p-4">
-            <h3 class="section-title">Forecast Queue</h3>
-            <p class="section-subtitle">Current disease projections shown to admins, with stored predictive results preferred.</p>
+            <h3 class="section-title">Latest Prediction Snapshot</h3>
+            <p class="section-subtitle">Aggregated directly from `predictive_analysis` by barangay.</p>
             <div class="stack-list">
-                @if (!Model.Forecasts.Any())
+                @if (!Model.HighRiskBarangaySnapshot.Barangays.Any())
                 {
                     <div class="stack-item">
-                        <p class="mb-0 text-secondary">No saved forecasts are available yet.</p>
+                        <p class="mb-0 text-secondary">No saved predictive-analysis data is available yet.</p>
                     </div>
                 }
                 else
                 {
-                    @foreach (var forecast in Model.Forecasts)
+                    @foreach (var barangay in Model.HighRiskBarangaySnapshot.Barangays)
                     {
                         <div class="stack-item">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h4>@forecast.Disease</h4>
-                                <span class="severity-pill @(forecast.ConfidenceScore >= 0.8f ? "high" : "medium")">@($"{forecast.ConfidenceScore:P0}")</span>
+                                <h4>@barangay.Barangay</h4>
+                                <span class="severity-pill high">@barangay.TotalCases cases</span>
                             </div>
-                            <p>@forecast.CurrentCases current cases, @forecast.PredictedCases projected cases, focus on @forecast.HighRiskBarangay.</p>
+                            <p>@barangay.TotalCases total predicted cases across @barangay.PredictionEntries forecast entries.</p>
+                            <small class="text-secondary">Latest generated: @barangay.LatestGenerated.ToString("MMM dd, yyyy")</small>
                         </div>
                     }
                 }
@@ -84,6 +83,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         const predictiveTrend = @Html.Raw(chartJson);
+        const barangayTrend = @Html.Raw(barangayChartJson);
         new Chart(document.getElementById("predictiveTrendChart"), {
             type: "line",
             data: {
@@ -96,6 +96,21 @@
                     fill: true,
                     tension: 0.35
                 }]
+            }
+        });
+
+        new Chart(document.getElementById("adminBarangayRiskChart"), {
+            type: "bar",
+            data: {
+                labels: barangayTrend.map(item => item.Label),
+                datasets: [{
+                    label: "Predicted Cases",
+                    data: barangayTrend.map(item => item.Value),
+                    backgroundColor: "rgba(214, 167, 44, 0.72)"
+                }]
+            },
+            options: {
+                indexAxis: "y"
             }
         });
     </script>
