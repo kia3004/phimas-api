@@ -252,104 +252,9 @@ public static class SeedData
 
     public static async Task EnsureSeedDataAsync(AppDbContext context)
     {
-        if (!await context.Users.AnyAsync())
-        {
-            await context.Users.AddRangeAsync(
-                new User
-                {
-                    FullName = "System Administrator",
-                    Role = "ADMIN",
-                    Email = "admin@phimas.com",
-                    Password = PasswordHelper.HashPassword("Admin123!"),
-                    ContactNumber = "09171234567",
-                    IsAvailable = false
-                },
-                new User
-                {
-                    FullName = "Dr. Elena Rivera",
-                    Role = "CHO",
-                    Email = "cho@phimas.com",
-                    Password = PasswordHelper.HashPassword("Cho123!"),
-                    ContactNumber = "09171234568",
-                    IsAvailable = false
-                },
-                new User
-                {
-                    FullName = "Maria Clara",
-                    Role = "BHW",
-                    Email = "bhw1@phimas.com",
-                    Password = PasswordHelper.HashPassword("Bhw123!"),
-                    ContactNumber = "09170000001",
-                    IsAvailable = true,
-                    AssignedArea = "Sevilla"
-                },
-                new User
-                {
-                    FullName = "Roberto Gomez",
-                    Role = "BHW",
-                    Email = "bhw2@phimas.com",
-                    Password = PasswordHelper.HashPassword("Bhw123!"),
-                    ContactNumber = "09170000002",
-                    IsAvailable = true,
-                    AssignedArea = "Catbangen"
-                },
-                new User
-                {
-                    FullName = "Liza Santos",
-                    Role = "BHW",
-                    Email = "bhw3@phimas.com",
-                    Password = PasswordHelper.HashPassword("Bhw123!"),
-                    ContactNumber = "09170000003",
-                    IsAvailable = false,
-                    AssignedArea = "San Vicente"
-                });
-            await context.SaveChangesAsync();
-        }
-
-        if (!await context.Households.AnyAsync())
-        {
-            await context.Households.AddRangeAsync(
-                HouseholdSeedDefinitions.Select(definition => new Household
-                {
-                    Address = definition.Address,
-                    RiskScore = definition.RiskScore
-                }));
-            await context.SaveChangesAsync();
-        }
-
-        if (!await context.HouseholdMembers.AnyAsync())
-        {
-            var households = await context.Households.OrderBy(household => household.HouseholdID).ToListAsync();
-            var members = new List<HouseholdMember>();
-
-            for (var index = 0; index < households.Count && index < HouseholdSeedDefinitions.Length; index++)
-            {
-                var household = households[index];
-                var definition = HouseholdSeedDefinitions[index];
-
-                members.Add(new HouseholdMember
-                {
-                    HouseholdID = household.HouseholdID,
-                    FullName = definition.EmergencyContactName,
-                    ContactNumber = BuildSeedContactNumber(household.HouseholdID, 0),
-                    IsEmergencyContact = true
-                });
-
-                for (var memberIndex = 0; memberIndex < definition.PatientNames.Length; memberIndex++)
-                {
-                    members.Add(new HouseholdMember
-                    {
-                        HouseholdID = household.HouseholdID,
-                        FullName = definition.PatientNames[memberIndex],
-                        ContactNumber = BuildSeedContactNumber(household.HouseholdID, memberIndex + 1),
-                        IsEmergencyContact = false
-                    });
-                }
-            }
-
-            await context.HouseholdMembers.AddRangeAsync(members);
-            await context.SaveChangesAsync();
-        }
+        await EnsureSeedUsersAsync(context);
+        await EnsureSeedHouseholdsAsync(context);
+        await EnsureSeedHouseholdMembersAsync(context);
 
         if (!await context.Inventory.AnyAsync())
         {
@@ -361,20 +266,7 @@ public static class SeedData
             await context.SaveChangesAsync();
         }
 
-        if (!await context.HealthRecords.AnyAsync())
-        {
-            var bhws = await context.Users
-                .Where(user => user.Role == "BHW")
-                .OrderBy(user => user.UserID)
-                .ToListAsync();
-            var members = await context.HouseholdMembers
-                .Include(member => member.Household)
-                .OrderBy(member => member.MemberID)
-                .ToListAsync();
-
-            await context.HealthRecords.AddRangeAsync(BuildSeedHealthRecords(bhws, members));
-            await context.SaveChangesAsync();
-        }
+        await EnsureSeedHealthRecordsAsync(context);
 
         if (!await context.TaskAssignments.AnyAsync())
         {
@@ -418,6 +310,244 @@ public static class SeedData
                 new PredictiveAnalysis { DateGenerated = DateTime.UtcNow, Disease = "Gastroenteritis", PredictedCases = 9, HighRiskBarangay = "Pagdalagan", ConfidenceScore = 0.76f });
             await context.SaveChangesAsync();
         }
+    }
+
+    private static async Task EnsureSeedUsersAsync(AppDbContext context)
+    {
+        var existingEmails = (await context.Users
+                .Select(user => user.Email)
+                .ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var usersToAdd = BuildRequiredSeedUsers()
+            .Where(user => !existingEmails.Contains(user.Email))
+            .ToList();
+
+        if (usersToAdd.Count == 0)
+        {
+            return;
+        }
+
+        await context.Users.AddRangeAsync(usersToAdd);
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task EnsureSeedHouseholdsAsync(AppDbContext context)
+    {
+        var existingAddresses = (await context.Households
+                .Select(household => household.Address)
+                .ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var householdsToAdd = HouseholdSeedDefinitions
+            .Where(definition => !existingAddresses.Contains(definition.Address))
+            .Select(definition => new Household
+            {
+                Address = definition.Address,
+                RiskScore = definition.RiskScore
+            })
+            .ToList();
+
+        if (householdsToAdd.Count == 0)
+        {
+            return;
+        }
+
+        await context.Households.AddRangeAsync(householdsToAdd);
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task EnsureSeedHouseholdMembersAsync(AppDbContext context)
+    {
+        var seedAddresses = HouseholdSeedDefinitions
+            .Select(definition => definition.Address)
+            .ToList();
+        var households = await context.Households
+            .Where(household => seedAddresses.Contains(household.Address))
+            .OrderBy(household => household.HouseholdID)
+            .ToListAsync();
+        var householdsByAddress = households.ToDictionary(
+            household => household.Address,
+            household => household,
+            StringComparer.OrdinalIgnoreCase);
+        var householdIds = households.Select(household => household.HouseholdID).ToList();
+        var existingMembers = await context.HouseholdMembers
+            .Where(member => householdIds.Contains(member.HouseholdID))
+            .ToListAsync();
+        var existingNamesByHousehold = existingMembers
+            .GroupBy(member => member.HouseholdID)
+            .ToDictionary(
+                group => group.Key,
+                group => group
+                    .Select(member => member.FullName)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase));
+        var householdsWithEmergencyContact = existingMembers
+            .Where(member => member.IsEmergencyContact)
+            .Select(member => member.HouseholdID)
+            .ToHashSet();
+        var membersToAdd = new List<HouseholdMember>();
+
+        foreach (var definition in HouseholdSeedDefinitions)
+        {
+            if (!householdsByAddress.TryGetValue(definition.Address, out var household))
+            {
+                continue;
+            }
+
+            if (!existingNamesByHousehold.TryGetValue(household.HouseholdID, out var existingNames))
+            {
+                existingNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                existingNamesByHousehold[household.HouseholdID] = existingNames;
+            }
+
+            if (!existingNames.Contains(definition.EmergencyContactName) &&
+                !householdsWithEmergencyContact.Contains(household.HouseholdID))
+            {
+                membersToAdd.Add(new HouseholdMember
+                {
+                    HouseholdID = household.HouseholdID,
+                    FullName = definition.EmergencyContactName,
+                    ContactNumber = BuildSeedContactNumber(household.HouseholdID, 0),
+                    IsEmergencyContact = true
+                });
+                existingNames.Add(definition.EmergencyContactName);
+                householdsWithEmergencyContact.Add(household.HouseholdID);
+            }
+
+            for (var memberIndex = 0; memberIndex < definition.PatientNames.Length; memberIndex++)
+            {
+                var patientName = definition.PatientNames[memberIndex];
+                if (existingNames.Contains(patientName))
+                {
+                    continue;
+                }
+
+                membersToAdd.Add(new HouseholdMember
+                {
+                    HouseholdID = household.HouseholdID,
+                    FullName = patientName,
+                    ContactNumber = BuildSeedContactNumber(household.HouseholdID, memberIndex + 1),
+                    IsEmergencyContact = false
+                });
+                existingNames.Add(patientName);
+            }
+        }
+
+        if (membersToAdd.Count == 0)
+        {
+            return;
+        }
+
+        await context.HouseholdMembers.AddRangeAsync(membersToAdd);
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task EnsureSeedHealthRecordsAsync(AppDbContext context)
+    {
+        var bhws = await context.Users
+            .Where(user => user.Role == "BHW")
+            .OrderBy(user => user.UserID)
+            .ToListAsync();
+        var members = await context.HouseholdMembers
+            .Include(member => member.Household)
+            .OrderBy(member => member.MemberID)
+            .ToListAsync();
+        var seedRecords = BuildSeedHealthRecords(bhws, members);
+        if (seedRecords.Count == 0)
+        {
+            return;
+        }
+
+        var minDate = seedRecords.Min(record => record.DateRecorded);
+        var maxDate = seedRecords.Max(record => record.DateRecorded);
+        var diseases = seedRecords
+            .Select(record => record.Disease)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var existingKeys = (await context.HealthRecords
+                .Where(record =>
+                    record.DateRecorded >= minDate &&
+                    record.DateRecorded <= maxDate &&
+                    diseases.Contains(record.Disease))
+                .Select(record => new
+                {
+                    record.PatientID,
+                    record.BHWID,
+                    record.DateRecorded,
+                    record.Disease,
+                    record.Symptoms,
+                    record.Status
+                })
+                .ToListAsync())
+            .Select(record => BuildHealthRecordSeedKey(
+                record.PatientID,
+                record.BHWID,
+                record.DateRecorded,
+                record.Disease,
+                record.Symptoms,
+                record.Status))
+            .ToHashSet(StringComparer.Ordinal);
+        var recordsToAdd = seedRecords
+            .Where(record => existingKeys.Add(BuildHealthRecordSeedKey(record)))
+            .ToList();
+
+        if (recordsToAdd.Count == 0)
+        {
+            return;
+        }
+
+        await context.HealthRecords.AddRangeAsync(recordsToAdd);
+        await context.SaveChangesAsync();
+    }
+
+    private static IEnumerable<User> BuildRequiredSeedUsers()
+    {
+        yield return new User
+        {
+            FullName = "System Administrator",
+            Role = "ADMIN",
+            Email = "admin@phimas.com",
+            Password = PasswordHelper.HashPassword("Admin123!"),
+            ContactNumber = "09171234567",
+            IsAvailable = false
+        };
+        yield return new User
+        {
+            FullName = "Dr. Elena Rivera",
+            Role = "CHO",
+            Email = "cho@phimas.com",
+            Password = PasswordHelper.HashPassword("Cho123!"),
+            ContactNumber = "09171234568",
+            IsAvailable = false
+        };
+        yield return new User
+        {
+            FullName = "Maria Clara",
+            Role = "BHW",
+            Email = "bhw1@phimas.com",
+            Password = PasswordHelper.HashPassword("Bhw123!"),
+            ContactNumber = "09170000001",
+            IsAvailable = true,
+            AssignedArea = "Sevilla"
+        };
+        yield return new User
+        {
+            FullName = "Roberto Gomez",
+            Role = "BHW",
+            Email = "bhw2@phimas.com",
+            Password = PasswordHelper.HashPassword("Bhw123!"),
+            ContactNumber = "09170000002",
+            IsAvailable = true,
+            AssignedArea = "Catbangen"
+        };
+        yield return new User
+        {
+            FullName = "Liza Santos",
+            Role = "BHW",
+            Email = "bhw3@phimas.com",
+            Password = PasswordHelper.HashPassword("Bhw123!"),
+            ContactNumber = "09170000003",
+            IsAvailable = false,
+            AssignedArea = "San Vicente"
+        };
     }
 
     private static async Task MigrateLegacyDataAsync(AppDbContext context)
@@ -836,6 +966,28 @@ public static class SeedData
         var targetMonth = currentMonth.AddMonths(monthOffset);
         var safeDay = Math.Min(day, DateTime.DaysInMonth(targetMonth.Year, targetMonth.Month));
         return new DateTime(targetMonth.Year, targetMonth.Month, safeDay, hour, minute, 0);
+    }
+
+    private static string BuildHealthRecordSeedKey(HealthRecord record)
+    {
+        return BuildHealthRecordSeedKey(
+            record.PatientID,
+            record.BHWID,
+            record.DateRecorded,
+            record.Disease,
+            record.Symptoms,
+            record.Status);
+    }
+
+    private static string BuildHealthRecordSeedKey(
+        int? patientId,
+        int? bhwId,
+        DateTime dateRecorded,
+        string? disease,
+        string? symptoms,
+        string? status)
+    {
+        return $"{patientId.GetValueOrDefault()}|{bhwId.GetValueOrDefault()}|{dateRecorded:yyyy-MM-dd HH:mm:ss}|{disease?.Trim()}|{symptoms?.Trim()}|{status?.Trim()}";
     }
 
     private static string ExtractBarangay(string address)
