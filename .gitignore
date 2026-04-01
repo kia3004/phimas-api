@@ -10,6 +10,7 @@
 # Build outputs
 _buildcheck/
 **/.gradle/
+**/.gradle-user/
 **/build/
 **/bin/
 **/obj/

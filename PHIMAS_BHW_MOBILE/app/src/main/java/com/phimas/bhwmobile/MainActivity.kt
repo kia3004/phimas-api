@@ -772,7 +772,7 @@ private fun HealthRecordsScreen(
                     DropdownField(
                         label = "Status",
                         selectedValue = status,
-                        options = listOf("Submitted", "Active", "Monitoring", "Escalated").map {
+                        options = listOf("Submitted", "Active", "Monitoring", "Recovered", "Critical", "Escalated").map {
                             ChoiceItem(value = it, label = it)
                         },
                         valueLabel = { it.ifBlank { "Status" } },
@@ -1538,9 +1538,9 @@ private fun DropdownField(
 
 private fun badgeColor(value: String): Color {
     return when (value.lowercase(Locale.getDefault())) {
-        "high", "urgent", "escalated" -> Color(0xFFDC2626)
+        "high", "urgent", "critical", "escalated" -> Color(0xFFDC2626)
         "medium", "started", "ongoing", "monitoring" -> Color(0xFFD97706)
-        "done", "completed", "available", "submitted", "info" -> Color(0xFF0F766E)
+        "done", "completed", "available", "submitted", "recovered", "info" -> Color(0xFF0F766E)
         "low" -> Color(0xFF2563EB)
         else -> Color(0xFF475569)
     }
