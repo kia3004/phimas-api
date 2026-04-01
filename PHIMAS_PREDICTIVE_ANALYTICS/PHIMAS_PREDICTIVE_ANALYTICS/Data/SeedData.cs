@@ -8,12 +8,102 @@ public static class SeedData
 {
     private static readonly SeedHouseholdDefinition[] HouseholdSeedDefinitions =
     [
-        new("Sevilla, Zone 4, San Fernando City", 72, "Juan Dela Cruz", ["Maria Dela Cruz", "Jose Dela Cruz", "Anna Dela Cruz", "Carl Dela Cruz"]),
-        new("Catbangen, Purok 2, San Fernando City", 58, "Ana Villanueva", ["Miguel Villanueva", "Clara Villanueva", "Sofia Villanueva"]),
-        new("San Vicente, Zone 1, San Fernando City", 84, "Pedro Santos", ["Lorna Santos", "Paolo Santos", "Rina Santos", "Mark Santos", "Ella Santos"]),
-        new("Sevilla, Zone 2, San Fernando City", 35, "Maricel Ramos", ["Noel Ramos", "Bea Ramos"]),
-        new("Catbangen, Purok 5, San Fernando City", 66, "Carlos Reyes", ["Luz Reyes", "Paula Reyes", "Ramon Reyes", "Joy Reyes", "Nina Reyes", "Leo Reyes"])
+        new("Sevilla, Purok 4, San Fernando City, La Union", 74, "Lucia Dela Cruz", ["Marco Dela Cruz", "Angelica Dela Cruz", "Nico Dela Cruz", "Tessa Dela Cruz", "Joshua Dela Cruz"]),
+        new("Sevilla, Riverside, San Fernando City, La Union", 63, "Roberto Castillo", ["Lorie Castillo", "Paolo Castillo", "Aira Castillo", "Jared Castillo", "Mika Castillo"]),
+        new("Catbangen, Purok 2, San Fernando City, La Union", 58, "Ana Villanueva", ["Miguel Villanueva", "Clara Villanueva", "Sofia Villanueva", "Ethan Villanueva", "Bea Villanueva"]),
+        new("Catbangen, Purok 5, San Fernando City, La Union", 68, "Carlos Reyes", ["Luz Reyes", "Paula Reyes", "Ramon Reyes", "Joy Reyes", "Nina Reyes"]),
+        new("San Vicente, Zone 1, San Fernando City, La Union", 82, "Pedro Santos", ["Lorna Santos", "Paolo Santos", "Rina Santos", "Mark Santos", "Ella Santos"]),
+        new("San Vicente, Zone 3, San Fernando City, La Union", 69, "Marilyn Aquino", ["Joshua Aquino", "Kate Aquino", "Lester Aquino", "Camille Aquino", "Ralph Aquino"]),
+        new("Pagdalagan, Sitio Centro, San Fernando City, La Union", 61, "Edna Ramos", ["Noel Ramos", "Bea Ramos", "Rina Ramos", "Cedrick Ramos", "Pam Ramos"]),
+        new("Pagdalagan, Purok 6, San Fernando City, La Union", 54, "Joel Mendoza", ["Arvin Mendoza", "Trisha Mendoza", "Kurt Mendoza", "Faith Mendoza", "Janine Mendoza"]),
+        new("Biday, Purok 3, San Fernando City, La Union", 47, "Helen Corpuz", ["Cedric Corpuz", "Mae Corpuz", "Janelle Corpuz", "Bryan Corpuz", "Cyril Corpuz"]),
+        new("Tanqui, Purok 1, San Fernando City, La Union", 52, "Rodolfo Flores", ["Karen Flores", "Enzo Flores", "Mara Flores", "Patrick Flores", "Celine Flores"]),
+        new("Pagdaraoan, Zone 2, San Fernando City, La Union", 57, "Teresita Navarro", ["Miko Navarro", "Jessa Navarro", "Alden Navarro", "Bianca Navarro", "Marlon Navarro"])
     ];
+
+    // Each cluster becomes a grouped case total in analytics, so counts stay within 1-20.
+    private static readonly HealthRecordSeedClusterDefinition[] HealthRecordSeedClusters =
+    [
+        new("Sevilla", "Dengue", "Sevilla", -6, 14, 4, 0),
+        new("Sevilla", "Dengue", "Sevilla", -5, 9, 6, 2),
+        new("Sevilla", "Dengue", "Sevilla", -3, 21, 5, 4),
+        new("Sevilla", "Dengue", "Sevilla", -1, 7, 7, 6),
+        new("Catbangen", "Flu", "Catbangen", -6, 18, 3, 0),
+        new("Catbangen", "Flu", "Catbangen", -5, 6, 4, 2),
+        new("Catbangen", "Flu", "Catbangen", -3, 15, 5, 4),
+        new("Catbangen", "Flu", "Catbangen", -1, 19, 4, 1),
+        new("San Vicente", "COVID-19", "San Vicente", -6, 11, 2, 0),
+        new("San Vicente", "COVID-19", "San Vicente", -4, 24, 3, 2),
+        new("San Vicente", "COVID-19", "San Vicente", -2, 10, 2, 4),
+        new("San Vicente", "COVID-19", "San Vicente", -1, 26, 4, 1),
+        new("Pagdalagan", "Gastroenteritis", "Sevilla", -5, 13, 3, 0),
+        new("Pagdalagan", "Gastroenteritis", "Sevilla", -4, 27, 4, 2),
+        new("Pagdalagan", "Gastroenteritis", "Sevilla", -2, 8, 3, 4),
+        new("Pagdalagan", "Gastroenteritis", "Sevilla", -1, 16, 5, 1),
+        new("Biday", "Flu", "Catbangen", -5, 22, 2, 5),
+        new("Biday", "Flu", "Catbangen", -4, 12, 2, 0),
+        new("Biday", "Flu", "Catbangen", -2, 20, 3, 3),
+        new("Biday", "Flu", "Catbangen", -1, 28, 2, 1),
+        new("Tanqui", "Gastroenteritis", "Sevilla", -6, 25, 2, 6),
+        new("Tanqui", "Gastroenteritis", "Sevilla", -4, 14, 3, 0),
+        new("Tanqui", "Gastroenteritis", "Sevilla", -2, 23, 2, 3),
+        new("Tanqui", "Gastroenteritis", "Sevilla", -1, 11, 2, 5),
+        new("Pagdaraoan", "Dengue", "San Vicente", -5, 17, 2, 1),
+        new("Pagdaraoan", "Dengue", "San Vicente", -4, 7, 3, 3),
+        new("Pagdaraoan", "Dengue", "San Vicente", -2, 18, 2, 5),
+        new("Pagdaraoan", "Dengue", "San Vicente", -1, 24, 3, 7)
+    ];
+
+    private static readonly IReadOnlyDictionary<string, string[]> SymptomsByDisease =
+        new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Dengue"] =
+            [
+                "High fever, severe headache, joint pain",
+                "Fever, retro-orbital pain, muscle aches",
+                "High fever, nausea, body pain",
+                "Persistent fever, rash, fatigue",
+                "Fever, abdominal pain, vomiting",
+                "Headache, muscle pain, loss of appetite",
+                "High fever, petechial rash, weakness",
+                "Fever, chills, joint pain, nausea",
+                "Body pain, headache, fever",
+                "Fever, dizziness, abdominal discomfort"
+            ],
+            ["Flu"] =
+            [
+                "Fever, cough, sore throat",
+                "Runny nose, body aches, headache",
+                "Cough, chills, nasal congestion",
+                "Fever, sore throat, fatigue",
+                "Dry cough, headache, body pain",
+                "Sneezing, cough, low-grade fever",
+                "Fever, cough, runny nose",
+                "Chills, sore throat, weakness"
+            ],
+            ["COVID-19"] =
+            [
+                "Fever, dry cough, fatigue",
+                "Sore throat, fever, headache",
+                "Cough, loss of taste, body aches",
+                "Fever, nasal congestion, fatigue",
+                "Dry cough, chills, weakness",
+                "Headache, sore throat, loss of smell",
+                "Cough, low-grade fever, muscle aches",
+                "Fatigue, fever, mild shortness of breath"
+            ],
+            ["Gastroenteritis"] =
+            [
+                "Diarrhea, vomiting, abdominal cramps",
+                "Loose stools, nausea, stomach pain",
+                "Vomiting, mild fever, dehydration",
+                "Diarrhea, abdominal pain, weakness",
+                "Nausea, loose stools, dizziness",
+                "Vomiting, cramps, low-grade fever",
+                "Diarrhea, nausea, loss of appetite",
+                "Stomach pain, vomiting, fatigue"
+            ]
+        };
 
     private static readonly string[] RequiredTables =
     [
@@ -273,39 +363,33 @@ public static class SeedData
 
         if (!await context.HealthRecords.AnyAsync())
         {
-            var bhwIds = await context.Users.Where(user => user.Role == "BHW").OrderBy(user => user.UserID).Select(user => user.UserID).ToListAsync();
-            var members = await context.HouseholdMembers.OrderBy(member => member.MemberID).ToListAsync();
-            var templates = new[]
-            {
-                new { Disease = "Dengue", Symptoms = "High fever, body pain, petechiae", Status = "Active", Offset = -10 },
-                new { Disease = "Influenza", Symptoms = "Cough, fever, sore throat", Status = "Monitoring", Offset = -7 },
-                new { Disease = "Leptospirosis", Symptoms = "Fever, headache, muscle pain", Status = "Active", Offset = -3 },
-                new { Disease = "Dengue", Symptoms = "Persistent fever, abdominal pain", Status = "Escalated", Offset = -1 },
-                new { Disease = "Acute Gastroenteritis", Symptoms = "Vomiting, diarrhea", Status = "Monitoring", Offset = 0 }
-            };
+            var bhws = await context.Users
+                .Where(user => user.Role == "BHW")
+                .OrderBy(user => user.UserID)
+                .ToListAsync();
+            var members = await context.HouseholdMembers
+                .Include(member => member.Household)
+                .OrderBy(member => member.MemberID)
+                .ToListAsync();
 
-            await context.HealthRecords.AddRangeAsync(
-                templates.Select((template, index) => new HealthRecord
-                {
-                    PatientID = members[index % members.Count].PatientID,
-                    BHWID = bhwIds[index % bhwIds.Count],
-                    DateRecorded = DateTime.UtcNow.AddDays(template.Offset),
-                    Disease = template.Disease,
-                    Symptoms = template.Symptoms,
-                    Status = template.Status
-                }));
+            await context.HealthRecords.AddRangeAsync(BuildSeedHealthRecords(bhws, members));
             await context.SaveChangesAsync();
         }
 
         if (!await context.TaskAssignments.AnyAsync())
         {
             var bhws = await context.Users.Where(user => user.Role == "BHW").OrderBy(user => user.UserID).ToListAsync();
-            var households = await context.Households.OrderByDescending(household => household.RiskScore).ToListAsync();
+            var householdsByBarangay = (await context.Households.ToListAsync())
+                .GroupBy(household => ExtractBarangay(household.Address), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.OrderByDescending(household => household.RiskScore).First(),
+                    StringComparer.OrdinalIgnoreCase);
 
             await context.TaskAssignments.AddRangeAsync(
-                new TaskAssignment { BHWID = bhws[0].UserID, HouseholdID = households[0].HouseholdID, TaskDate = DateTime.Today.AddHours(9), Priority = "High", Status = "Pending", Title = "Dengue validation visit", Description = "Validate symptoms and escalate possible severe dengue cases." },
-                new TaskAssignment { BHWID = bhws[1].UserID, HouseholdID = households[1].HouseholdID, TaskDate = DateTime.Today.AddHours(13), Priority = "Medium", Status = "Started", Title = "Influenza follow-up", Description = "Review influenza symptoms and reinforce isolation guidance." },
-                new TaskAssignment { BHWID = bhws[2].UserID, HouseholdID = households[2].HouseholdID, TaskDate = DateTime.Today.AddHours(15), Priority = "High", Status = "Ongoing", Title = "Leptospirosis coordination", Description = "Coordinate with CHO on the household's leptospirosis risk." });
+                new TaskAssignment { BHWID = bhws[0].UserID, HouseholdID = householdsByBarangay["Sevilla"].HouseholdID, TaskDate = DateTime.Today.AddHours(9), Priority = "High", Status = "Pending", Title = "Dengue validation visit", Description = "Validate recent dengue symptoms and check for warning signs in Sevilla households." },
+                new TaskAssignment { BHWID = bhws[1].UserID, HouseholdID = householdsByBarangay["Catbangen"].HouseholdID, TaskDate = DateTime.Today.AddHours(13), Priority = "Medium", Status = "Started", Title = "Flu follow-up", Description = "Review flu recovery progress and reinforce home isolation guidance." },
+                new TaskAssignment { BHWID = bhws[2].UserID, HouseholdID = householdsByBarangay["San Vicente"].HouseholdID, TaskDate = DateTime.Today.AddHours(15), Priority = "High", Status = "Ongoing", Title = "COVID household monitoring", Description = "Monitor symptomatic COVID-19 patients and confirm medication and isolation needs." });
             await context.SaveChangesAsync();
         }
 
@@ -328,8 +412,10 @@ public static class SeedData
         if (!await context.PredictiveAnalysis.AnyAsync())
         {
             await context.PredictiveAnalysis.AddRangeAsync(
-                new PredictiveAnalysis { DateGenerated = DateTime.UtcNow.AddDays(-1), Disease = "Dengue", PredictedCases = 12, HighRiskBarangay = "Sevilla", ConfidenceScore = 0.88f },
-                new PredictiveAnalysis { DateGenerated = DateTime.UtcNow, Disease = "Influenza", PredictedCases = 8, HighRiskBarangay = "Catbangen", ConfidenceScore = 0.74f });
+                new PredictiveAnalysis { DateGenerated = DateTime.UtcNow.AddDays(-3), Disease = "Dengue", PredictedCases = 14, HighRiskBarangay = "Sevilla", ConfidenceScore = 0.89f },
+                new PredictiveAnalysis { DateGenerated = DateTime.UtcNow.AddDays(-2), Disease = "Flu", PredictedCases = 11, HighRiskBarangay = "Catbangen", ConfidenceScore = 0.78f },
+                new PredictiveAnalysis { DateGenerated = DateTime.UtcNow.AddDays(-1), Disease = "COVID-19", PredictedCases = 7, HighRiskBarangay = "San Vicente", ConfidenceScore = 0.72f },
+                new PredictiveAnalysis { DateGenerated = DateTime.UtcNow, Disease = "Gastroenteritis", PredictedCases = 9, HighRiskBarangay = "Pagdalagan", ConfidenceScore = 0.76f });
             await context.SaveChangesAsync();
         }
     }
@@ -644,7 +730,135 @@ public static class SeedData
         }
     }
 
+    private static IReadOnlyList<HealthRecord> BuildSeedHealthRecords(
+        IReadOnlyList<User> bhws,
+        IReadOnlyList<HouseholdMember> members)
+    {
+        var bhwIdsByArea = bhws
+            .Where(user => !string.IsNullOrWhiteSpace(user.AssignedArea))
+            .GroupBy(user => user.AssignedArea!.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group.First().UserID,
+                StringComparer.OrdinalIgnoreCase);
+
+        var patientsByBarangay = members
+            .Where(member => !member.IsEmergencyContact && member.Household != null)
+            .GroupBy(member => ExtractBarangay(member.Household!.Address), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group.OrderBy(member => member.FullName).ThenBy(member => member.PatientID).ToList(),
+                StringComparer.OrdinalIgnoreCase);
+
+        var patientOffsetsByBarangay = patientsByBarangay.Keys.ToDictionary(
+            barangay => barangay,
+            _ => 0,
+            StringComparer.OrdinalIgnoreCase);
+        var records = new List<HealthRecord>();
+
+        for (var clusterIndex = 0; clusterIndex < HealthRecordSeedClusters.Length; clusterIndex++)
+        {
+            var cluster = HealthRecordSeedClusters[clusterIndex];
+
+            if (!patientsByBarangay.TryGetValue(cluster.Barangay, out var patients) || patients.Count < cluster.CaseCount)
+            {
+                throw new InvalidOperationException(
+                    $"Seed data requires at least {cluster.CaseCount} patients in {cluster.Barangay}, but fewer were found.");
+            }
+
+            if (!bhwIdsByArea.TryGetValue(cluster.BhwArea, out var bhwId))
+            {
+                throw new InvalidOperationException(
+                    $"Seed data requires a BHW assigned to {cluster.BhwArea}.");
+            }
+
+            var symptoms = SymptomsByDisease[cluster.Disease];
+            var startIndex = patientOffsetsByBarangay[cluster.Barangay];
+
+            for (var caseIndex = 0; caseIndex < cluster.CaseCount; caseIndex++)
+            {
+                var patient = patients[(startIndex + caseIndex) % patients.Count];
+                var hour = 8 + ((clusterIndex + caseIndex) % 9);
+                var minute = caseIndex % 2 == 0 ? 15 : 40;
+
+                records.Add(new HealthRecord
+                {
+                    PatientID = patient.PatientID,
+                    BHWID = bhwId,
+                    DateRecorded = BuildSeedDate(cluster.MonthOffset, cluster.Day, hour, minute),
+                    Disease = cluster.Disease,
+                    Symptoms = symptoms[(cluster.SymptomOffset + caseIndex) % symptoms.Length],
+                    Status = BuildSeedStatus(cluster.MonthOffset, cluster.Disease, caseIndex, cluster.CaseCount)
+                });
+            }
+
+            patientOffsetsByBarangay[cluster.Barangay] = (startIndex + cluster.CaseCount) % patients.Count;
+        }
+
+        return records;
+    }
+
+    private static string BuildSeedStatus(int monthOffset, string disease, int caseIndex, int caseCount)
+    {
+        if (monthOffset <= -5)
+        {
+            return caseIndex % 3 == 0 ? "Resolved" : "Recovered";
+        }
+
+        if (monthOffset == -4)
+        {
+            return caseIndex == caseCount - 1 ? "Monitoring" : caseIndex % 2 == 0 ? "Resolved" : "Recovered";
+        }
+
+        if (monthOffset == -3)
+        {
+            return caseIndex % 3 == 0 ? "Monitoring" : "Recovered";
+        }
+
+        if (monthOffset == -2)
+        {
+            return disease.Equals("Dengue", StringComparison.OrdinalIgnoreCase) && caseIndex == caseCount - 1
+                ? "Referred"
+                : caseIndex % 2 == 0 ? "Monitoring" : "Recovered";
+        }
+
+        if (disease.Equals("Dengue", StringComparison.OrdinalIgnoreCase) && caseIndex == caseCount - 1)
+        {
+            return "Referred";
+        }
+
+        return caseIndex % 4 == 0 ? "Active" : caseIndex % 3 == 0 ? "Monitoring" : "Recovered";
+    }
+
+    private static DateTime BuildSeedDate(int monthOffset, int day, int hour, int minute)
+    {
+        var currentMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        var targetMonth = currentMonth.AddMonths(monthOffset);
+        var safeDay = Math.Min(day, DateTime.DaysInMonth(targetMonth.Year, targetMonth.Month));
+        return new DateTime(targetMonth.Year, targetMonth.Month, safeDay, hour, minute, 0);
+    }
+
+    private static string ExtractBarangay(string address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            return string.Empty;
+        }
+
+        var separatorIndex = address.IndexOf(',');
+        return separatorIndex >= 0 ? address[..separatorIndex].Trim() : address.Trim();
+    }
+
     private static string BuildSeedContactNumber(int householdId, int memberIndex) => $"0917{householdId:000}{memberIndex:0000}";
+
+    private sealed record HealthRecordSeedClusterDefinition(
+        string Barangay,
+        string Disease,
+        string BhwArea,
+        int MonthOffset,
+        int Day,
+        int CaseCount,
+        int SymptomOffset);
 
     private sealed record SeedHouseholdDefinition(string Address, float RiskScore, string EmergencyContactName, string[] PatientNames);
 }
