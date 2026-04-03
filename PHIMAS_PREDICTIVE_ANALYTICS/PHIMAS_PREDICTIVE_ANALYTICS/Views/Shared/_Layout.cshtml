@@ -7,6 +7,7 @@
     var isHomePage = path.Equals("/", StringComparison.OrdinalIgnoreCase) || path.Equals("/Home", StringComparison.OrdinalIgnoreCase) || path.Equals("/Home/Index", StringComparison.OrdinalIgnoreCase);
     var isSignInPage = path.Equals("/Account/SignIn", StringComparison.OrdinalIgnoreCase);
     var isSignUpPage = path.Equals("/Account/SignUp", StringComparison.OrdinalIgnoreCase);
+    var isAuthPage = isSignInPage || isSignUpPage;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -17,44 +18,84 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body class="phimas-public">
-    <div class="public-shell">
-        <header class="public-header">
-            <a class="public-brand" asp-area="" asp-controller="Home" asp-action="Index" aria-label="PHIMAS home">
-                <span class="public-brand__logos">
-                    <img src="~/images/LOGOP.png" alt="PHIMAS logo" />
-                    <img src="~/images/citylogo1.png" alt="City logo 1" />
-                    <img src="~/images/citylogo2.png" alt="City logo 2" />
-                </span>
-                <span class="public-brand__copy">
-                    <strong>PHIMAS</strong>
-                    <span>Public Health Information Management and Analytics System</span>
-                </span>
-            </a>
+<body class="phimas-public @(isAuthPage ? "phimas-public--auth" : null)">
+    @if (isAuthPage)
+    {
+        <main class="public-main public-main--auth" role="main">
+            <section class="auth-stage">
+                <div class="auth-stage__panel">
+                    <header class="auth-stage__header">
+                        <a class="auth-stage__brand" asp-area="" asp-controller="Home" asp-action="Index" aria-label="PHIMAS home">
+                            <span class="auth-stage__logos">
+                                <img src="~/images/LOGOP.png" alt="PHIMAS logo" />
+                                <img src="~/images/citylogo1.png" alt="City logo 1" />
+                                <img src="~/images/citylogo2.png" alt="City logo 2" />
+                            </span>
+                            <span class="auth-stage__brand-copy">PHIMAS</span>
+                        </a>
 
-            <nav class="public-nav" aria-label="Primary">
-                <a class="public-nav__link @(isHomePage ? "is-active" : null)"
-                   asp-area=""
-                   asp-controller="Home"
-                   asp-action="Index">Home</a>
-                <a class="public-nav__link @(isSignInPage ? "is-active" : null)"
-                   asp-controller="Account"
-                   asp-action="SignIn">Sign In</a>
-                <a class="public-nav__link public-nav__link--cta @(isSignUpPage ? "is-active" : null)"
-                   asp-controller="Account"
-                   asp-action="SignUp">Sign Up</a>
-            </nav>
-        </header>
+                        <nav class="auth-stage__nav" aria-label="Authentication">
+                            <a class="auth-stage__link @(isSignInPage ? "is-active" : null)"
+                               asp-controller="Account"
+                               asp-action="SignIn">Sign In</a>
+                            <a class="auth-stage__link @(isSignUpPage ? "is-active" : null)"
+                               asp-controller="Account"
+                               asp-action="SignUp">Sign Up</a>
+                        </nav>
+                    </header>
 
-        <main class="public-main @(isSignInPage || isSignUpPage ? "public-main--auth" : "public-main--content")" role="main">
-            @RenderBody()
+                    <div class="auth-stage__body">
+                        @RenderBody()
+                    </div>
+
+                    <footer class="auth-stage__footer">
+                        <a asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                    </footer>
+                </div>
+            </section>
         </main>
+    }
+    else
+    {
+        <div class="public-shell">
+            <header class="public-header">
+                <a class="public-brand" asp-area="" asp-controller="Home" asp-action="Index" aria-label="PHIMAS home">
+                    <span class="public-brand__logos">
+                        <img src="~/images/LOGOP.png" alt="PHIMAS logo" />
+                        <img src="~/images/citylogo1.png" alt="City logo 1" />
+                        <img src="~/images/citylogo2.png" alt="City logo 2" />
+                    </span>
+                    <span class="public-brand__copy">
+                        <strong>PHIMAS</strong>
+                        <span>Public Health Information Management and Analytics System</span>
+                    </span>
+                </a>
 
-        <footer class="public-footer">
-            <span>PHIMAS</span>
-            <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </footer>
-    </div>
+                <nav class="public-nav" aria-label="Primary">
+                    <a class="public-nav__link @(isHomePage ? "is-active" : null)"
+                       asp-area=""
+                       asp-controller="Home"
+                       asp-action="Index">Home</a>
+                    <a class="public-nav__link @(isSignInPage ? "is-active" : null)"
+                       asp-controller="Account"
+                       asp-action="SignIn">Sign In</a>
+                    <a class="public-nav__link public-nav__link--cta @(isSignUpPage ? "is-active" : null)"
+                       asp-controller="Account"
+                       asp-action="SignUp">Sign Up</a>
+                </nav>
+            </header>
+
+            <main class="public-main public-main--content" role="main">
+                @RenderBody()
+            </main>
+
+            <footer class="public-footer">
+                <span>PHIMAS</span>
+                <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            </footer>
+        </div>
+    }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

@@ -2,28 +2,14 @@
     ViewData["Title"] = "PHIMAS";
 }
 
-<section class="public-card home-hero">
-    <div class="hero-copy">
-        <span class="hero-badge">PHIMAS</span>
-        <h1 class="hero-title">A unified workspace for disease monitoring, field coordination, and predictive outbreak insights.</h1>
-        <div class="hero-actions">
-            <a asp-controller="Account" asp-action="SignIn" class="btn btn-phimas">Sign In</a>
-            <a asp-controller="Account" asp-action="SignUp" class="btn btn-ghost">Create Account</a>
-        </div>
+<section class="public-card public-card--narrow auth-entry">
+    <div class="auth-entry__brand">
+        <img src="~/images/LOGOP.png" alt="PHIMAS logo" />
+        <span>PHIMAS</span>
     </div>
 
-    <div class="hero-panel">
-        <div class="hero-panel__item">
-            <strong>CHO</strong>
-            <span>Review disease trends and predictive analytics.</span>
-        </div>
-        <div class="hero-panel__item">
-            <strong>Admin</strong>
-            <span>Manage users, records, inventory, and reports.</span>
-        </div>
-        <div class="hero-panel__item">
-            <strong>BHW</strong>
-            <span>Track field tasks and synchronize household health records.</span>
-        </div>
+    <div class="hero-actions hero-actions--center">
+        <a asp-controller="Account" asp-action="SignIn" class="btn btn-phimas">Sign In</a>
+        <a asp-controller="Account" asp-action="SignUp" class="btn btn-ghost">Create Account</a>
     </div>
 </section>
