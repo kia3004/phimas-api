@@ -185,6 +185,8 @@ body.phimas-public.phimas-public--auth::after {
 }
 
 .public-main--auth {
+  position: relative;
+  z-index: 1;
   min-height: 100vh;
   place-items: center;
   padding: clamp(1rem, 2vw, 1.5rem);
