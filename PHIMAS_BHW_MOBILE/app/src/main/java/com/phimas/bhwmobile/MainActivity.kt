@@ -83,6 +83,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -225,18 +226,38 @@ private fun LoginScreen(
 ) {
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
+    val cardContainerColor = if (isDarkTheme) {
+        Color(0xC81A2C23)
+    } else {
+        Color.White.copy(alpha = 0.82f)
+    }
+    val cardBorderColor = if (isDarkTheme) {
+        Color.White.copy(alpha = 0.16f)
+    } else {
+        Color.White.copy(alpha = 0.54f)
+    }
+    val contentColor = if (isDarkTheme) {
+        Color(0xFFF2FBF6)
+    } else {
+        Color(0xFF13271F)
+    }
+    val secondaryContentColor = if (isDarkTheme) {
+        Color(0xC7EEF8F2)
+    } else {
+        Color(0xB0143126)
+    }
     val fieldColors = OutlinedTextFieldDefaults.colors(
-        focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.12f),
-        unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.08f),
-        disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.06f),
+        focusedContainerColor = if (isDarkTheme) Color.White.copy(alpha = 0.16f) else Color.White.copy(alpha = 0.88f),
+        unfocusedContainerColor = if (isDarkTheme) Color.White.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.72f),
+        disabledContainerColor = if (isDarkTheme) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.48f),
         focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.72f),
-        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.28f),
-        disabledBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f),
-        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-        disabledTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        focusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        unfocusedBorderColor = if (isDarkTheme) Color.White.copy(alpha = 0.16f) else Color(0x2613271F),
+        disabledBorderColor = if (isDarkTheme) Color.White.copy(alpha = 0.1f) else Color(0x1F13271F),
+        focusedTextColor = contentColor,
+        unfocusedTextColor = contentColor,
+        disabledTextColor = secondaryContentColor,
+        focusedLabelColor = secondaryContentColor,
+        unfocusedLabelColor = secondaryContentColor,
         cursorColor = MaterialTheme.colorScheme.primary,
     )
 
@@ -254,11 +275,11 @@ private fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
-                    Brush.linearGradient(
+                    Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xD9091510),
-                            Color(0xBF103A24),
-                            Color(0x731F5B3B),
+                            Color(0x5C08120D),
+                            Color(0x33123825),
+                            Color(0x14F3F8F5),
                         ),
                     ),
                 ),
@@ -270,18 +291,23 @@ private fun LoginScreen(
                 .widthIn(max = 560.dp)
                 .align(Alignment.Center)
                 .padding(horizontal = 20.dp, vertical = 24.dp)
-                .statusBarsPadding(),
-            shape = RoundedCornerShape(32.dp),
+                .statusBarsPadding()
+                .shadow(
+                    elevation = 32.dp,
+                    shape = RoundedCornerShape(34.dp),
+                ),
+            shape = RoundedCornerShape(34.dp),
             border = androidx.compose.foundation.BorderStroke(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = if (isDarkTheme) 0.34f else 0.2f),
+                color = cardBorderColor,
             ),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = if (isDarkTheme) 0.76f else 0.72f),
+                containerColor = cardContainerColor,
             ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier.padding(28.dp),
                 verticalArrangement = Arrangement.spacedBy(22.dp),
             ) {
                 Row(
@@ -297,16 +323,22 @@ private fun LoginScreen(
                             painter = painterResource(id = R.drawable.logop),
                             contentDescription = "PHIMAS logo",
                             modifier = Modifier
-                                .size(56.dp)
-                                .clip(RoundedCornerShape(18.dp))
-                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.22f))
-                                .padding(8.dp),
+                                .size(62.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(Color.White.copy(alpha = if (isDarkTheme) 0.14f else 0.58f))
+                                .border(
+                                    width = 1.dp,
+                                    color = Color.White.copy(alpha = if (isDarkTheme) 0.12f else 0.42f),
+                                    shape = RoundedCornerShape(20.dp),
+                                )
+                                .padding(9.dp),
                             contentScale = ContentScale.Fit,
                         )
                         Text(
                             text = "PHIMAS",
                             style = MaterialTheme.typography.headlineSmall.copy(fontFamily = FontFamily.Serif),
                             fontWeight = FontWeight.Bold,
+                            color = contentColor,
                         )
                     }
 
@@ -316,7 +348,7 @@ private fun LoginScreen(
                     )
                 }
 
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.14f))
+                HorizontalDivider(color = Color.White.copy(alpha = if (isDarkTheme) 0.12f else 0.42f))
 
                 Column(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -325,6 +357,7 @@ private fun LoginScreen(
                         text = "Sign In",
                         style = MaterialTheme.typography.headlineMedium.copy(fontFamily = FontFamily.Serif),
                         fontWeight = FontWeight.SemiBold,
+                        color = contentColor,
                     )
                     OutlinedTextField(
                         value = username,
@@ -353,10 +386,10 @@ private fun LoginScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(18.dp))
-                                .background(MaterialTheme.colorScheme.error.copy(alpha = 0.1f))
+                                .background(MaterialTheme.colorScheme.error.copy(alpha = if (isDarkTheme) 0.14f else 0.1f))
                                 .border(
                                     width = 1.dp,
-                                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.18f),
+                                    color = MaterialTheme.colorScheme.error.copy(alpha = if (isDarkTheme) 0.26f else 0.18f),
                                     shape = RoundedCornerShape(18.dp),
                                 )
                                 .padding(horizontal = 14.dp, vertical = 12.dp),
@@ -368,9 +401,9 @@ private fun LoginScreen(
                         enabled = username.isNotBlank() && password.isNotBlank() && !isAuthenticating,
                         shape = RoundedCornerShape(20.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF0F7A4C),
+                            containerColor = Color(0xFF118B58),
                             contentColor = Color.White,
-                            disabledContainerColor = Color(0xFF0F7A4C).copy(alpha = 0.4f),
+                            disabledContainerColor = Color(0xFF118B58).copy(alpha = 0.4f),
                         ),
                     ) {
                         if (isAuthenticating) {

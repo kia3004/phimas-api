@@ -36,8 +36,8 @@ body.phimas-public::after {
 
 body.phimas-public::before {
   background: url("/images/background.png") center center / cover no-repeat;
-  transform: scale(1.04);
-  filter: blur(1.5px);
+  transform: scale(1.02);
+  filter: blur(0.9px);
 }
 
 body.phimas-public::after {
@@ -50,9 +50,9 @@ body.phimas-public::after {
 body.phimas-public.phimas-public--startup::after,
 body.phimas-public.phimas-public--auth::after {
   background:
-    linear-gradient(135deg, rgba(5, 16, 10, 0.68), rgba(8, 37, 24, 0.48) 42%, rgba(246, 250, 248, 0.12)),
-    radial-gradient(circle at top left, rgba(214, 167, 44, 0.18), transparent 26%),
-    radial-gradient(circle at bottom right, rgba(15, 122, 76, 0.2), transparent 30%);
+    linear-gradient(135deg, rgba(5, 16, 10, 0.36), rgba(8, 37, 24, 0.18) 42%, rgba(246, 250, 248, 0.06)),
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.2), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(15, 122, 76, 0.12), transparent 30%);
 }
 
 .public-shell {
@@ -275,7 +275,13 @@ body.phimas-public.phimas-public--auth::after {
 }
 
 body.phimas-public.phimas-public--auth::before {
-  filter: blur(0.75px);
+  transform: scale(1.01);
+  filter: blur(0.25px);
+}
+
+body.phimas-public.phimas-public--startup::before {
+  transform: scale(1.01);
+  filter: blur(0.2px);
 }
 
 .auth-stage {
@@ -290,13 +296,13 @@ body.phimas-public.phimas-public--auth::before {
   border-radius: 36px;
   backdrop-filter: blur(26px);
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08)),
-    var(--auth-surface);
-  border: 1px solid var(--auth-border);
+    linear-gradient(145deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.1)),
+    rgba(15, 35, 25, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.34);
   box-shadow:
-    0 30px 80px rgba(2, 20, 13, 0.38),
-    0 0 0 1px rgba(255, 255, 255, 0.06),
-    0 0 36px rgba(255, 255, 255, 0.08);
+    0 28px 80px rgba(2, 20, 13, 0.24),
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 40px rgba(255, 255, 255, 0.12);
 }
 
 .auth-stage__header,
@@ -396,13 +402,14 @@ body.phimas-public.phimas-public--auth::before {
   padding: clamp(1.35rem, 3vw, 2rem);
   border-radius: 30px;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.08)),
-    rgba(8, 23, 16, 0.32);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+    linear-gradient(150deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.66)),
+    rgba(247, 251, 249, 0.44);
+  border: 1px solid rgba(255, 255, 255, 0.76);
   box-shadow:
-    0 22px 50px rgba(0, 0, 0, 0.28),
-    0 0 28px rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(18px);
+    0 26px 60px rgba(4, 18, 12, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.28),
+    0 0 36px rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(22px);
 }
 
 .auth-view--wide {
@@ -412,7 +419,7 @@ body.phimas-public.phimas-public--auth::before {
 .auth-title {
   margin: 0;
   font-size: clamp(2rem, 4.5vw, 3rem);
-  color: #fff;
+  color: var(--brand-strong);
 }
 
 .auth-form {
@@ -431,22 +438,22 @@ body.phimas-public.phimas-public--auth::before {
   font-weight: 800;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: rgba(244, 250, 247, 0.76);
+  color: rgba(19, 39, 31, 0.68);
 }
 
 .auth-view .form-control,
 .auth-view .form-select {
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(19, 39, 31, 0.12);
+  background: rgba(255, 255, 255, 0.76);
   padding: 0.95rem 1rem;
   min-height: 3.35rem;
-  color: #fff;
+  color: var(--public-text);
   backdrop-filter: blur(14px);
 }
 
 .auth-view .form-control::placeholder {
-  color: rgba(244, 250, 247, 0.55);
+  color: rgba(82, 105, 93, 0.8);
 }
 
 .auth-view .form-select option {
@@ -458,9 +465,9 @@ body.phimas-public.phimas-public--auth::before {
 .auth-view .form-select:focus,
 .btn:focus,
 .btn:active:focus {
-  border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.24);
+  border-color: rgba(15, 122, 76, 0.34);
+  box-shadow: 0 0 0 0.25rem rgba(15, 122, 76, 0.12);
+  background: rgba(255, 255, 255, 0.94);
 }
 
 .btn {
@@ -476,14 +483,15 @@ body.phimas-public.phimas-public--auth::before {
 }
 
 .btn-ghost {
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(19, 39, 31, 0.1);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.72);
   color: var(--brand-strong);
+  box-shadow: 0 14px 32px rgba(7, 22, 14, 0.12);
 }
 
 .btn-ghost:hover,
 .btn-ghost:focus {
-  background: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.96);
   color: var(--brand-strong);
 }
 
@@ -504,9 +512,9 @@ body.phimas-public.phimas-public--auth::before {
 .auth-view .validation-summary-errors {
   padding: 0.8rem 1rem;
   border-radius: 18px;
-  border: 1px solid rgba(255, 208, 208, 0.22);
-  background: rgba(176, 71, 71, 0.16);
-  color: #ffd8d8;
+  border: 1px solid rgba(176, 71, 71, 0.18);
+  background: rgba(255, 238, 238, 0.84);
+  color: #8e2e2e;
 }
 
 .validation-summary-errors ul {
@@ -537,19 +545,20 @@ body.phimas-public.phimas-public--auth::before {
   justify-items: center;
   width: min(100%, 420px);
   padding: clamp(1.6rem, 4vw, 2.4rem);
-  border-radius: 32px;
-  backdrop-filter: blur(24px);
+  border-radius: 36px;
+  backdrop-filter: blur(28px);
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08)),
-    rgba(13, 28, 20, 0.34);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+    linear-gradient(150deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.46)),
+    rgba(249, 252, 250, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.62);
   box-shadow:
-    0 26px 70px rgba(2, 20, 13, 0.38),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
+    0 30px 84px rgba(6, 22, 15, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.22),
+    0 0 40px rgba(255, 255, 255, 0.16);
 }
 
 .startup-card__logo {
-  width: clamp(96px, 20vw, 136px);
+  width: clamp(112px, 22vw, 156px);
   height: auto;
   object-fit: contain;
 }
