@@ -29,33 +29,19 @@
     else if (isAuthPage)
     {
         <main class="public-main public-main--auth" role="main">
-            <section class="auth-stage">
-                <div class="auth-stage__panel">
-                    <header class="auth-stage__header">
-                        <a class="auth-stage__brand" asp-area="" asp-controller="Home" asp-action="Index" aria-label="PHIMAS home">
-                            <span class="auth-stage__logos">
-                                <img src="~/images/LOGOP.png" alt="PHIMAS logo" />
-                                <img src="~/images/citylogo1.png" alt="City logo 1" />
-                                <img src="~/images/citylogo2.png" alt="City logo 2" />
-                            </span>
-                            <span class="auth-stage__brand-copy">PHIMAS</span>
+            <section class="auth-card-shell @(isSignUpPage ? "auth-card-shell--wide" : null)">
+                <div class="auth-card">
+                    <header class="auth-card__header">
+                        <a class="auth-card__brand" asp-area="" asp-controller="Home" asp-action="Index" aria-label="PHIMAS home">
+                            <img src="~/images/LOGOP.png" alt="PHIMAS logo" />
                         </a>
-
-                        <nav class="auth-stage__nav" aria-label="Authentication">
-                            <a class="auth-stage__link @(isSignInPage ? "is-active" : null)"
-                               asp-controller="Account"
-                               asp-action="SignIn">Sign In</a>
-                            <a class="auth-stage__link @(isSignUpPage ? "is-active" : null)"
-                               asp-controller="Account"
-                               asp-action="SignUp">Sign Up</a>
-                        </nav>
                     </header>
 
-                    <div class="auth-stage__body">
+                    <div class="auth-card__body">
                         @RenderBody()
                     </div>
 
-                    <footer class="auth-stage__footer">
+                    <footer class="auth-card__footer">
                         <a asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                     </footer>
