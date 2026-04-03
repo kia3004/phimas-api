@@ -2,9 +2,9 @@
   --public-surface: rgba(247, 251, 249, 0.8);
   --public-surface-strong: rgba(255, 255, 255, 0.88);
   --public-border: rgba(255, 255, 255, 0.24);
-  --auth-surface: rgba(248, 251, 250, 0.18);
+  --auth-surface: rgba(18, 34, 25, 0.42);
   --auth-surface-strong: rgba(255, 255, 255, 0.24);
-  --auth-border: rgba(255, 255, 255, 0.22);
+  --auth-border: rgba(255, 255, 255, 0.28);
   --public-shadow: 0 28px 70px rgba(2, 20, 13, 0.35);
   --public-text: #13271f;
   --public-muted: #52695d;
@@ -45,6 +45,14 @@ body.phimas-public::after {
     linear-gradient(135deg, rgba(5, 16, 10, 0.82), rgba(8, 37, 24, 0.62) 42%, rgba(246, 250, 248, 0.18)),
     radial-gradient(circle at top left, rgba(214, 167, 44, 0.22), transparent 26%),
     radial-gradient(circle at bottom right, rgba(15, 122, 76, 0.24), transparent 30%);
+}
+
+body.phimas-public.phimas-public--startup::after,
+body.phimas-public.phimas-public--auth::after {
+  background:
+    linear-gradient(135deg, rgba(5, 16, 10, 0.68), rgba(8, 37, 24, 0.48) 42%, rgba(246, 250, 248, 0.12)),
+    radial-gradient(circle at top left, rgba(214, 167, 44, 0.18), transparent 26%),
+    radial-gradient(circle at bottom right, rgba(15, 122, 76, 0.2), transparent 30%);
 }
 
 .public-shell {
@@ -177,6 +185,15 @@ body.phimas-public::after {
   padding: clamp(1rem, 2vw, 1.5rem);
 }
 
+.startup-shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: clamp(1rem, 4vw, 2rem);
+}
+
 .public-card {
   width: min(100%, 1080px);
   padding: clamp(1.4rem, 3vw, 2.8rem);
@@ -271,12 +288,15 @@ body.phimas-public.phimas-public--auth::before {
   width: 100%;
   padding: clamp(1.2rem, 2.5vw, 2rem);
   border-radius: 36px;
-  backdrop-filter: blur(24px);
+  backdrop-filter: blur(26px);
   background:
-    linear-gradient(145deg, rgba(248, 251, 250, 0.18), rgba(255, 255, 255, 0.1)),
-    rgba(10, 26, 18, 0.18);
+    linear-gradient(145deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08)),
+    var(--auth-surface);
   border: 1px solid var(--auth-border);
-  box-shadow: var(--public-shadow);
+  box-shadow:
+    0 30px 80px rgba(2, 20, 13, 0.38),
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 0 36px rgba(255, 255, 255, 0.08);
 }
 
 .auth-stage__header,
@@ -350,6 +370,7 @@ body.phimas-public.phimas-public--auth::before {
 
 .auth-stage__body {
   display: grid;
+  place-items: center;
 }
 
 .auth-stage__footer {
@@ -372,6 +393,16 @@ body.phimas-public.phimas-public--auth::before {
   gap: 1.2rem;
   width: min(100%, 430px);
   margin-inline: auto;
+  padding: clamp(1.35rem, 3vw, 2rem);
+  border-radius: 30px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.08)),
+    rgba(8, 23, 16, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 22px 50px rgba(0, 0, 0, 0.28),
+    0 0 28px rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px);
 }
 
 .auth-view--wide {
@@ -406,12 +437,12 @@ body.phimas-public.phimas-public--auth::before {
 .auth-view .form-control,
 .auth-view .form-select {
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.18);
   padding: 0.95rem 1rem;
   min-height: 3.35rem;
   color: #fff;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(14px);
 }
 
 .auth-view .form-control::placeholder {
@@ -427,9 +458,9 @@ body.phimas-public.phimas-public--auth::before {
 .auth-view .form-select:focus,
 .btn:focus,
 .btn:active:focus {
-  border-color: rgba(255, 255, 255, 0.38);
-  box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.24);
 }
 
 .btn {
@@ -498,6 +529,39 @@ body.phimas-public.phimas-public--auth::before {
   display: grid;
   gap: 1.35rem;
   justify-items: center;
+}
+
+.startup-card {
+  display: grid;
+  gap: clamp(1.25rem, 3vw, 1.75rem);
+  justify-items: center;
+  width: min(100%, 420px);
+  padding: clamp(1.6rem, 4vw, 2.4rem);
+  border-radius: 32px;
+  backdrop-filter: blur(24px);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08)),
+    rgba(13, 28, 20, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    0 26px 70px rgba(2, 20, 13, 0.38),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.startup-card__logo {
+  width: clamp(96px, 20vw, 136px);
+  height: auto;
+  object-fit: contain;
+}
+
+.startup-card__actions {
+  display: grid;
+  gap: 0.85rem;
+  width: 100%;
+}
+
+.startup-card__actions .btn {
+  width: 100%;
 }
 
 .auth-entry__brand {

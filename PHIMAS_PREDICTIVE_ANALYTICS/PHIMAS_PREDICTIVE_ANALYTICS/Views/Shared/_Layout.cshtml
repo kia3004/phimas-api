@@ -5,6 +5,7 @@
         : $"{title} - PHIMAS";
     var path = Context.Request.Path.Value ?? string.Empty;
     var isHomePage = path.Equals("/", StringComparison.OrdinalIgnoreCase) || path.Equals("/Home", StringComparison.OrdinalIgnoreCase) || path.Equals("/Home/Index", StringComparison.OrdinalIgnoreCase);
+    var isStartupPage = isHomePage;
     var isSignInPage = path.Equals("/Account/SignIn", StringComparison.OrdinalIgnoreCase);
     var isSignUpPage = path.Equals("/Account/SignUp", StringComparison.OrdinalIgnoreCase);
     var isAuthPage = isSignInPage || isSignUpPage;
@@ -18,8 +19,14 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body class="phimas-public @(isAuthPage ? "phimas-public--auth" : null)">
-    @if (isAuthPage)
+<body class="phimas-public @(isAuthPage ? "phimas-public--auth" : isStartupPage ? "phimas-public--startup" : null)">
+    @if (isStartupPage)
+    {
+        <main class="startup-shell" role="main">
+            @RenderBody()
+        </main>
+    }
+    else if (isAuthPage)
     {
         <main class="public-main public-main--auth" role="main">
             <section class="auth-stage">

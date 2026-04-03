@@ -2,13 +2,10 @@
     ViewData["Title"] = "PHIMAS";
 }
 
-<section class="public-card public-card--narrow auth-entry">
-    <div class="auth-entry__brand">
-        <img src="~/images/LOGOP.png" alt="PHIMAS logo" />
-        <span>PHIMAS</span>
-    </div>
+<section class="startup-card">
+    <img class="startup-card__logo" src="~/images/LOGOP.png" alt="PHIMAS logo" />
 
-    <div class="hero-actions hero-actions--center">
+    <div class="startup-card__actions">
         <a asp-controller="Account" asp-action="SignIn" class="btn btn-phimas">Sign In</a>
         <a asp-controller="Account" asp-action="SignUp" class="btn btn-ghost">Create Account</a>
     </div>
